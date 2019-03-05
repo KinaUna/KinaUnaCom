@@ -6,7 +6,7 @@ KinaUna is an ASP.Net Core 2.2 web application, hosted on Azure.
 
 The goal is to create apps, services and tools for families.
 
-Basically the idea is to take features from business, lifestyle and social networking and adapt them to private family tools.
+Basically the idea is to take features from business, lifestyle and social networking software and adapt them to private family tools.
 
 As it has been a one-person project so far, the features are limited to some basic functions for managing and sharing a child's information, with room for plenty of improvements:
 Photos, Videos, Calendar, Locations, Vocabulary, Skills, Friends, Measurements, Sleep, Notes, Contacts, and Vaccinations.
