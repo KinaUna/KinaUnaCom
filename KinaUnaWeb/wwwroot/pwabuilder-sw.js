@@ -45,16 +45,13 @@ self.addEventListener('push', function (event) {
 
     console.log('Notification Recieved:');
     console.log('Data: ' + data);
-    //console.log('Data.title: ' + data.title);
-    //console.log('Data.message: ' + data.message);
-    //console.log('Data.link: ' + data.link);
     var notification = {};
     notification = JSON.parse(data);
     var title = notification.Title; // data.title
     var message = notification.Message;
     var link = notification.Link;
-    var icon = "https://web.kinauna.com/images/kinaunalogo192x192_rounded.png";
-    var badge = "https://web.kinauna.com/images/kinaunalogo_badge3.png";
+    var icon = "https://kinaunademoweb.azurewebsites.net/images/kinaunalogo192x192_rounded.png";
+    var badge = "https://kinaunademoweb.azurewebsites.net/images/kinaunalogo_badge3.png";
     var tag = notification.Tag;
     event.waitUntil(self.registration.showNotification(title, {
         body: message,
@@ -70,13 +67,12 @@ self.addEventListener('notificationclick',
     function (event) {
         var notification = event.notification;
         var action = event.action;
-        var link = notification.data; // '/notifications';
-        // var notificationId = notification.data.notificationId;
+        var link = notification.data;
         if (action === 'close') {
             notification.close();
         } else {
             if (action === 'open') {
-                self.clients.openWindow('/notifications'); // /notifications/push/' + notificationId);
+                self.clients.openWindow('/notifications');
                 notification.close();
             } else {
                 self.clients.openWindow(link);
@@ -89,17 +85,17 @@ function displayNotification() {
     if (Notification.permission === 'granted') {
         navigator.serviceWorker.getRegistration().then(function (reg) {
             var options = {
-                body: 'KinaUna Message',
-                icon: 'https://web.kinauna.com/images/kinaunalogo192x192.png',
-                badge: "https://web.kinauna.com/images/kinaunalogo_badge3.png",
+                body: 'KinaUnaDemo Message',
+                icon: 'https://kinaunademoweb.azurewebsites.net/images/kinaunalogo192x192.png',
+                badge: "https://kinaunademoweb.azurewebsites.net/images/kinaunalogo_badge3.png",
                 vibrate: [100, 50, 100],
                 data: { notificationId: 1 },
                 actions: [
-                    { action: 'open', title: 'Open', icon: 'https://web.kinauna.com/images/launch.png' },
-                    { action: 'close', title: 'Close', icon: 'https://web.kinauna.com/images/clear.png' }
+                    { action: 'open', title: 'Open', icon: 'https://kinaunademoweb.azurewebsites.net/images/launch.png' },
+                    { action: 'close', title: 'Close', icon: 'https://kinaunademoweb.azurewebsites.net/images/clear.png' }
                 ]
             };
-            reg.showNotification('KinaUna Web App', options);
+            reg.showNotification('KinaUnaDemo Web App', options);
         });
     }
 }
