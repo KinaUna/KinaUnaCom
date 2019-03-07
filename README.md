@@ -42,3 +42,6 @@ More information can be found here: https://web.kinauna.com/Home/About
 - WebPush
 - SignalR
 - Magick.NET
+
+See this Wiki for information on how to get it up and running yourself:
+https://github.com/KinaUna/KinaUnaCom/wiki/Getting-Started
