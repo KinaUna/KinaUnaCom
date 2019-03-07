@@ -2,15 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <UserSecretsId>aspnet-KinaUnaWeb-3CFF80E1-DFC0-426E-B569-60032DF70BB3</UserSecretsId>
+    <UserSecretsId>aspnet-KinaUnaWebDemo-3CFF80E1-DFC0-426E-B569-60032DF70BB3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="nget.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="nget.xml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +28,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Api\" />
+    <Folder Include="Migrations\" />
     <Folder Include="Models\PushMessageViewModels\" />
   </ItemGroup>
 

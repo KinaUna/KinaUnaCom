@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <UserSecretsId>05227611-949b-4b9a-8c51-681ec00f8009</UserSecretsId>
+    <UserSecretsId>aspnet-KinaUnaProgenyDemo-3CFF80E1-DFC0-426E-B569-60032DF70BB3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

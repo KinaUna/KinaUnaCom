@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <UserSecretsId>fb949426-2ed5-4726-bd7c-258af67c98a8</UserSecretsId>
+    <UserSecretsId>aspnet-KinaUnaMediaDemo-3CFF80E1-DFC0-426E-B569-60032DF70BB3</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
