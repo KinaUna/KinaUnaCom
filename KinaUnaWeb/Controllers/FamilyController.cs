@@ -1,9 +1,9 @@
-﻿using KinaUnaWeb.Models;
-using KinaUnaWeb.Services;
+﻿using KinaUnaWeb.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KinaUna.Data.Models;
 
 namespace KinaUnaWeb.Controllers
 {

@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using KinaUnaWeb.Data;
-using KinaUnaWeb.Models;
+using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 using KinaUnaWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;

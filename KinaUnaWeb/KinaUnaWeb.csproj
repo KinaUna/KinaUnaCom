@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Api\" />
-    <Folder Include="Migrations\" />
+    <Folder Include="Data\" />
     <Folder Include="Models\PushMessageViewModels\" />
   </ItemGroup>
 
@@ -59,6 +59,16 @@
     <None Include="wwwroot\lib\quilljs\src\modules\Resize.js" />
     <None Include="wwwroot\lib\quilljs\src\modules\Toolbar.js" />
     <None Include="wwwroot\lib\quilljs\webpack.config.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KinaUna.Data\KinaUna.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System">
+      <HintPath>System</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

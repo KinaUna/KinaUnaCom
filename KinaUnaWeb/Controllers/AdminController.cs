@@ -1,15 +1,13 @@
-﻿using KinaUnaWeb.Data;
-using KinaUnaWeb.Models;
+﻿using KinaUnaWeb.Models;
 using KinaUnaWeb.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
+using KinaUna.Data.Contexts;
 using KinaUnaWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using KinaUna.Data.Models;
 
 namespace KinaUnaWeb.Controllers
 {

@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using KinaUnaProgenyApi.Data;
+using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 using KinaUnaProgenyApi.Models;
 using KinaUnaProgenyApi.Services;
 using Microsoft.AspNetCore.Authorization;

@@ -1,6 +1,6 @@
 ﻿using IdentityServer4.AccessTokenValidation;
+using KinaUna.Data.Contexts;
 using KinaUnaProgenyApi.Authorization;
-using KinaUnaProgenyApi.Data;
 using KinaUnaProgenyApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -61,6 +61,8 @@ namespace KinaUnaProgenyApi
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            InitializeDatabase(app);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -73,6 +75,14 @@ namespace KinaUnaProgenyApi
             app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseMvc();
+        }
+
+        private void InitializeDatabase(IApplicationBuilder app)
+        {
+            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                serviceScope.ServiceProvider.GetRequiredService<ProgenyDbContext>().Database.Migrate();
+            }
         }
     }
 }

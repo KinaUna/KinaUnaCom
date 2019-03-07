@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
-using KinaUnaWeb.Models;
+using KinaUna.Data.Models;
 
 namespace KinaUnaWeb.Services
 {

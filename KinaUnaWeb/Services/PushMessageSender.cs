@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using KinaUnaWeb.Data;
+using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 using KinaUnaWeb.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

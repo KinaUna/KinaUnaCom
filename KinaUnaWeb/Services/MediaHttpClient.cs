@@ -6,7 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using IdentityModel.Client;
-using KinaUnaWeb.Models;
+using KinaUna.Data.Models;
 using KinaUnaWeb.Models.ItemViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;

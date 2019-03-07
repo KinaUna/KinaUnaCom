@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
-using KinaUnaWeb.Data;
-using KinaUnaWeb.Models;
+using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

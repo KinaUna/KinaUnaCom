@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KinaUna.Data\KinaUna.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="Views\Account\ChangeEmail.da.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
@@ -130,6 +134,10 @@
 
   <ItemGroup>
     <WCFMetadata Include="Connected Services" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>

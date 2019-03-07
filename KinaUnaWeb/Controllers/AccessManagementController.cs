@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using KinaUnaWeb.Models;
+using KinaUna.Data.Models;
 using KinaUnaWeb.Models.FamilyViewModels;
 using KinaUnaWeb.Services;
 using Microsoft.AspNetCore.Mvc;

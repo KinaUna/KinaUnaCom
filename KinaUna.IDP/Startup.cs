@@ -1,8 +1,6 @@
 ﻿using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using IdentityServer4.Services;
-using KinaUna.IDP.Data;
-using KinaUna.IDP.Models;
 using KinaUna.IDP.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -20,6 +18,8 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 
 namespace KinaUna.IDP
 {

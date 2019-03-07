@@ -1,5 +1,4 @@
-﻿using KinaUnaWeb.Models;
-using KinaUnaWeb.Models.ItemViewModels;
+﻿using KinaUnaWeb.Models.ItemViewModels;
 using KinaUnaWeb.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -9,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using KinaUnaWeb.Data;
+using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
