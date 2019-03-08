@@ -20,6 +20,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using KinaUnaWeb.Hubs;
@@ -52,12 +53,25 @@ namespace KinaUnaWeb
                 options.CheckConsentNeeded = context => false;
                 options.MinimumSameSitePolicy = SameSiteMode.Lax;
             });
-
+            
             services.AddDbContext<WebDbContext>(options =>
-                options.UseSqlServer(Configuration["WebDefaultConnection"]));
+                options.UseSqlServer(Configuration["WebDefaultConnection"],
+                    sqlServerOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                        //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }));
 
-            services.AddDbContext<ApplicationDbContext>(
-                options => options.UseSqlServer(Configuration["DataProtectionConnection"]));
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration["DataProtectionConnection"],
+                    sqlServerOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                        //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }));
 
             services.AddSingleton<IXmlRepository, DataProtectionKeyRepository>();
             var built = services.BuildServiceProvider();

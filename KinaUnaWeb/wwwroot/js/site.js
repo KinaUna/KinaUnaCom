@@ -38,7 +38,7 @@ function runWaitMeLeave2() {
 window.addEventListener('message',
     function (event) {
         isAuthPage = false;
-        if (~event.origin.indexOf('https://web.kinauna.com')) {
+        if (~event.origin.indexOf('https://kinaunademoweb.azurewebsites.net')) {
             isAuthPage = true;
             if (event.data === "closeKinaUnaFrame") {
                 if (window === window.top) {
@@ -54,7 +54,7 @@ window.addEventListener('message',
                 }
             }
         }
-        if (~event.origin.indexOf('https://auth.kinauna.com')) {
+        if (~event.origin.indexOf('https://kinaunademoauth.azurewebsites.net')) {
             isAuthPage = true;
             if (event.data === "closeModal") {
                 runWaitMeLeave();
@@ -102,7 +102,7 @@ function frameLoaded() {
                 checkFrameCount++;
                 if (!isAuthPage && checkFrameCount > 1) {
                     if (checkFrameCount > 5) {
-                        window.location.href = "https://web.kinauna.com/account/noframelogin";
+                        window.location.href = "https://kinaunademoweb.azurewebsites.net/account/noframelogin";
                         return false;
                     }
                     console.log("Submitting LoginForm from checkFrame.");

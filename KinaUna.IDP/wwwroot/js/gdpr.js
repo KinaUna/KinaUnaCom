@@ -31,7 +31,7 @@ function createCookie(name, value, days) {
         expires = "";
     }
     if (window.dropCookie) {
-        document.cookie = name + "=" + value + expires + ";domain=.kinauna.com;path=/";
+        document.cookie = name + "=" + value + expires + ";domain=.kinaunademoauth.azurewebsites.net;path=/";
     }
 }
 

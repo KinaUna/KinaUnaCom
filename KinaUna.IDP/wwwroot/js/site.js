@@ -1,6 +1,6 @@
 ﻿document.domain = document.domain;
 window.addEventListener('message', function (event) {
-    if (~event.origin.indexOf('https://web.kinauna.com')) {
+    if (~event.origin.indexOf('https://kinaunademoweb.azurewebsites.net')) {
         window.parent.postMessage("auth", '*');
 
     }

@@ -1,4 +1,6 @@
-﻿using IdentityServer4.AccessTokenValidation;
+﻿using System;
+using System.Reflection;
+using IdentityServer4.AccessTokenValidation;
 using KinaUna.Data.Contexts;
 using KinaUnaProgenyApi.Authorization;
 using KinaUnaProgenyApi.Services;
@@ -30,8 +32,14 @@ namespace KinaUnaProgenyApi
             services.AddSingleton<ImageStore>();
 
             services.AddDbContext<ProgenyDbContext>(options =>
-                options.UseSqlServer(Configuration["ProgenyDefaultConnection"]));
-            
+                options.UseSqlServer(Configuration["ProgenyDefaultConnection"],
+                    sqlServerOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                        //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }));
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddAuthorization(authorizationOptions =>
@@ -61,8 +69,6 @@ namespace KinaUnaProgenyApi
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            InitializeDatabase(app);
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -77,12 +83,6 @@ namespace KinaUnaProgenyApi
             app.UseMvc();
         }
 
-        private void InitializeDatabase(IApplicationBuilder app)
-        {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
-            {
-                serviceScope.ServiceProvider.GetRequiredService<ProgenyDbContext>().Database.Migrate();
-            }
-        }
+        
     }
 }

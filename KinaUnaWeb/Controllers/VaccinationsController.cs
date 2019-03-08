@@ -1,4 +1,5 @@
-﻿using KinaUnaWeb.Models.ItemViewModels;
+﻿using System;
+using KinaUnaWeb.Models.ItemViewModels;
 using KinaUnaWeb.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,18 @@ namespace KinaUnaWeb.Controllers
             }
 
             Progeny progeny = await _progenyHttpClient.GetProgeny(_progId);
+            if (progeny == null)
+            {
+                progeny = new Progeny();
+                progeny.Admins = Constants.AdminEmail;
+                progeny.Id = 0;
+                progeny.BirthDay = DateTime.UtcNow;
+                progeny.Name = "No Children in the Database";
+                progeny.NickName = "No default child defined";
+                progeny.TimeZone = Constants.DefaultTimezone;
+                progeny.PictureLink = Constants.ProfilePictureUrl;
+            }
+
             List<UserAccess> accessList = await _progenyHttpClient.GetProgenyAccessList(_progId);
 
             int userAccessLevel = (int)AccessLevel.Public;

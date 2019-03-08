@@ -12,7 +12,7 @@ function createDiv() {
     div.setAttribute('class', 'navbar navbar-dark fixed-bottom bg-warning');
     div.setAttribute('style', 'padding-top: 10px; padding-bottom: 25px; margin-bottom: -15px;');
     div.innerHTML =
-        '<div class="container">KinaUna.com bruger cookies til at gemme bruger indstillinger og login informationer.<br/>Vi formoder at du accepterer cookies ved fortsat brug af KinaUna.com.<br/>For mere information se Fortrolighedspolitikken.<a class="leavePage" href="/Home/Privacy/" rel="nofollow" title="Privacy Policy">Fortrolighedspolitik</a> <a class="close-cookie-banner btn btn-success" href="javascript:void(0);" onclick="removeMe();"><span>OK</span></a></div>';
+        '<div class="container">KinaUnaDemo bruger cookies til at gemme bruger indstillinger og login informationer.<br/>Vi formoder at du accepterer cookies ved fortsat brug af KinaUna.com.<br/>For mere information se Fortrolighedspolitikken.<a class="leavePage" href="/Home/Privacy/" rel="nofollow" title="Privacy Policy">Fortrolighedspolitik</a> <a class="close-cookie-banner btn btn-success" href="javascript:void(0);" onclick="removeMe();"><span>OK</span></a></div>';
     // Be advised the Close Banner 'X' link requires jQuery
     // bodytag.appendChild(div); // Adds the Cookie Law Banner just before the closing </body> tag
     // or
@@ -31,7 +31,7 @@ function createCookie(name, value, days) {
         expires = "";
     }
     if (window.dropCookie) {
-        document.cookie = name + "=" + value + expires + ";domain=.kinauna.com;path=/";
+        document.cookie = name + "=" + value + expires + ";domain=.kinaunademoweb.azurewebsites.net;path=/";
     }
 }
 

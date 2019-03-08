@@ -1,4 +1,6 @@
-﻿using IdentityServer4.AccessTokenValidation;
+﻿using System;
+using System.Reflection;
+using IdentityServer4.AccessTokenValidation;
 using KinaUna.Data.Contexts;
 using KinaUnaMediaApi.Authorization;
 using KinaUnaMediaApi.Services;
@@ -28,9 +30,16 @@ namespace KinaUnaMediaApi
             var authorityServerUrl = Configuration.GetValue<string>("AuthenticationServer");
             var authenticationServerClientId = Configuration.GetValue<string>("AuthenticationServerClientId");
             var authenticationServerClientSecret = Configuration["AuthenticationServerClientSecret"];
+            
 
             services.AddDbContext<MediaDbContext>(options =>
-                options.UseSqlServer(Configuration["MediaDefaultConnection"]));
+                options.UseSqlServer(Configuration["MediaDefaultConnection"],
+                    sqlServerOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                        //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
@@ -62,8 +71,6 @@ namespace KinaUnaMediaApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            InitializeDatabase(app);
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -77,14 +84,6 @@ namespace KinaUnaMediaApi
 
             app.UseHttpsRedirection();
             app.UseMvc();
-        }
-
-        private void InitializeDatabase(IApplicationBuilder app)
-        {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
-            {
-                serviceScope.ServiceProvider.GetRequiredService<MediaDbContext>().Database.Migrate();
-            }
         }
     }
 }
