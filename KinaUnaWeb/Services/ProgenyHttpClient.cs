@@ -11,6 +11,7 @@ using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using KinaUna.Data.Models;
+using KinaUna.Data;
 
 namespace KinaUnaWeb.Services
 {
@@ -35,7 +36,6 @@ namespace KinaUnaWeb.Services
             var tokenResponse = await discoveryClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = _configuration.GetValue<string>("AuthenticationServer") + "/connect/token",
-
                 ClientId = _configuration.GetValue<string>("AuthenticationServerClientId"),
                 ClientSecret = _configuration.GetValue<string>("AuthenticationServerClientSecret"),
                 Scope = Constants.ProgenyApiName
@@ -204,6 +204,23 @@ namespace KinaUnaWeb.Services
             {
                 progeny.Name = "401";
                 progeny.NickName = e.Message;
+
+                //if (progenyId != Constants.DefaultChildId)
+                //{
+                //    progeny.Name = "401";
+                //    progeny.NickName = e.Message;
+                //}
+                //else
+                //{
+                //    progeny.Admins = Constants.AdminEmail;
+                //    progeny.Id = Constants.DefaultChildId;
+                //    progeny.BirthDay = DateTime.UtcNow;
+                //    progeny.Name = Constants.AppName;
+                //    progeny.NickName = Constants.AppName;
+                //    progeny.TimeZone = Constants.DefaultTimezone;
+                //    progeny.PictureLink = Constants.ProfilePictureUrl;
+                //}
+                
                 return progeny;
             }
 

@@ -26,6 +26,7 @@ using KinaUna.Data.Models;
 using KinaUnaWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
+using KinaUna.Data;
 
 namespace KinaUnaWeb
 {

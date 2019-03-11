@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using KinaUnaWeb.Services;
@@ -102,7 +103,7 @@ namespace KinaUnaWeb.Hubs
                 WebNotification webNotification = new WebNotification();
                 webNotification.Title = "Notification Sent to " + notification.To;
                 webNotification.Message = "";
-                webNotification.From = "KinaUna.com";
+                webNotification.From = Constants.AppName;
                 webNotification.Type = "Notification";
                 webNotification.DateTime = DateTime.UtcNow;
                 webNotification.DateTime = TimeZoneInfo.ConvertTimeFromUtc(webNotification.DateTime,
@@ -197,7 +198,7 @@ namespace KinaUnaWeb.Hubs
         {
             string userEmail = Context.GetHttpContext().User.FindFirst("email")?.Value ?? "NoUser";
             string userTimeZone = Context.GetHttpContext().User.FindFirst("timezone")?.Value ?? "Romance Standard Time";
-            if (userEmail.ToUpper() == "PER.MOGENSEN@GMAIL.COM")
+            if (userEmail.ToUpper() == Constants.AdminEmail.ToUpper())
             {
                 if (notification.To == "OnlineUsers")
                 {
@@ -212,7 +213,7 @@ namespace KinaUnaWeb.Hubs
                     WebNotification webNotification = new WebNotification();
                     webNotification.Title = "Notification Sent to " + notification.To;
                     webNotification.Message = "";
-                    webNotification.From = "KinaUna.com";
+                    webNotification.From = Constants.AppName;
                     webNotification.Type = "Notification";
                     webNotification.DateTime = DateTime.UtcNow;
                     webNotification.DateTime = TimeZoneInfo.ConvertTimeFromUtc(webNotification.DateTime,

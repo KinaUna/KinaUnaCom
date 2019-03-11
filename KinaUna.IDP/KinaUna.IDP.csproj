@@ -3,6 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <UserSecretsId>aspnet-KinaUnaAuthDemo-3CFF80E1-DFC0-426E-B569-60032DF70BB3</UserSecretsId>
+    <Platforms>AnyCPU;x86</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Optimize>true</Optimize>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup>

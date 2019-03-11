@@ -1,4 +1,5 @@
-﻿@using KinaUna.IDP
+﻿@using KinaUna.Data
+@using KinaUna.IDP
 @{
     ViewData["Title"] = "Privacy";
 }
@@ -115,7 +116,7 @@
     <div class="card-body" style="background: lightyellow;">
         <div class="card-title">Further Information</div>
         <div class="card-text">
-            If you have questions or comments regarding the privacy policy, your data, or cookies used by KinaUna.com, send an email to <a href="mailto://@Constants.SupportEmail">@Constants.SupportEmail</a>.<br />
+            If you have questions or comments regarding the privacy policy, your data, or cookies used by @Constants.AppName, send an email to <a href="mailto://@Constants.SupportEmail">@Constants.SupportEmail</a>.<br />
             <br />
             You can find the terms of use here: <a asp-controller="Home" asp-action="Terms">Terms</a><br />
         </div>

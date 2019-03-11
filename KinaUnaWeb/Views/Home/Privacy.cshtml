@@ -1,4 +1,5 @@
-﻿@{
+﻿@using KinaUna.Data
+@{
     ViewData["Title"] = "Privacy";
 }
 <h3 class="title">@ViewData["Title"]</h3>
@@ -94,7 +95,7 @@
                     <tr>
                         <td style="padding: 15px;">CONSENT (.gstatic.com)</td>
                         <td style="padding: 15px;">
-                            KinaUna.com uses Google fonts, this cookie is used by Google to optimize delivery of fonts.<br />It does not correspond to any user ID in the application, and does not store any personally identifiable information.<br />
+                            @Constants.AppName uses Google fonts, this cookie is used by Google to optimize delivery of fonts.<br />It does not correspond to any user ID in the application, and does not store any personally identifiable information.<br />
                             Read more here: <a href="https://developers.google.com/fonts/faq#what_does_using_the_google_fonts_api_mean_for_the_privacy_of_my_users">Google Fonts FAQ</a>
                         </td>
                     </tr>

@@ -12,6 +12,7 @@ using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using KinaUna.Data;
 
 namespace KinaUnaWeb.Controllers
 {

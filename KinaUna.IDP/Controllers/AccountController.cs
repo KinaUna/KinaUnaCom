@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
+using KinaUna.Data;
 
 namespace KinaUna.IDP.Controllers
 {

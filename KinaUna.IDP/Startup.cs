@@ -18,6 +18,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 
@@ -233,7 +234,11 @@ namespace KinaUna.IDP
 
                 var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
                 context.Database.Migrate();
-                
+
+                var usersContext = serviceScope.ServiceProvider.GetRequiredService<ProgenyDbContext>();
+
+                context.Database.Migrate();
+
                 if (resetDb)
                 {
                     var contextClients = context.Clients.ToList();
@@ -284,6 +289,16 @@ namespace KinaUna.IDP
                         context.ApiResources.Add(resource.ToEntity());
                     }
                     context.SaveChanges();
+                }
+
+                if (usersContext.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == Constants.DefaultUserEmail.ToUpper()) == null)
+                {
+                    UserInfo userInfo = new UserInfo();
+                    userInfo.UserEmail = Constants.DefaultUserEmail;
+                    userInfo.FirstName = "System";
+                    userInfo.LastName = "Default User";
+                    userInfo.Timezone = Constants.DefaultTimezone;
+                    userInfo.ViewChild = Constants.DefaultChildId;
                 }
             }
         }

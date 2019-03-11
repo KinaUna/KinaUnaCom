@@ -1,4 +1,5 @@
-﻿@using KinaUna.IDP
+﻿@using KinaUna.Data
+@using KinaUna.IDP
 @model KinaUna.IDP.Models.AccountViewModels.RegisterViewModel
 @{
     ViewData["Title"] = "Neuen Benutzer anmelden";
@@ -69,8 +70,8 @@ Erfahren Sie, wie wir Cookies anwenden und Daten sammeln, verarbeiten und verwen
             (2) the posting of such user content on @Constants.AppName does not violate any intellectual property or proprietary rights of any person or entity, including any privacy rights, publicity rights, copyrights, or any other contract rights.<br />
             We reserve the right to terminate the account of anyone found to be infringing a third party’s intellectual property or other proprietary right.<br />
             You retain any and all rights to any User Content you submit/post on @Constants.AppName.<br />
-            We take no responsibility and assume no liability for user content you or any third party posts on KinaUna.com, or that is posted publicly as a result of your use of @Constants.AppName.<br />
-            The extent to which your user content is available publicly is determined by the settings you choose as part of the submission of data. You are responsible for the ways in which your user content is published via KinaUna.com.<br />
+            We take no responsibility and assume no liability for user content you or any third party posts on @Constants.AppName, or that is posted publicly as a result of your use of @Constants.AppName.<br />
+            The extent to which your user content is available publicly is determined by the settings you choose as part of the submission of data. You are responsible for the ways in which your user content is published via @Constants.AppName.<br />
             @Constants.AppName assumes no responsibility for how user content is shared by anyone not employed by @Constants.AppName.
             @Constants.AppName has the right but not the obligation to monitor and edit all user content provided by you and any other user of @Constants.AppName.<br />
         </div>

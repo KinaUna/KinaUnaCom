@@ -12,7 +12,7 @@ function createDiv() {
     div.setAttribute('class', 'navbar navbar-dark fixed-bottom bg-warning');
     div.setAttribute('style', 'padding-top: 10px; padding-bottom: 25px; margin-bottom: -15px;');
     div.innerHTML =
-        '<div class="container">KinaUna.com uses cookies to store user state and login information.<br/>By continuing we assume your permission to deploy cookies.<br/>For more information see the privacy policy.<a class="leavePage" href="/Home/Privacy/" rel="nofollow" title="Privacy Policy">Privacy Policy</a> <a class="close-cookie-banner btn btn-success" href="javascript:void(0);" onclick="removeMe();"><span>OK</span></a></div>';
+        '<div class="container">KinaUna Demo uses cookies to store user state and login information.<br/>By continuing we assume your permission to deploy cookies.<br/>For more information see the privacy policy.<a class="leavePage" href="/Home/Privacy/" rel="nofollow" title="Privacy Policy">Privacy Policy</a> <a class="close-cookie-banner btn btn-success" href="javascript:void(0);" onclick="removeMe();"><span>OK</span></a></div>';
     // Be advised the Close Banner 'X' link requires jQuery
     // bodytag.appendChild(div); // Adds the Cookie Law Banner just before the closing </body> tag
     // or

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUnaWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;

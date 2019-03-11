@@ -17,6 +17,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -75,10 +76,10 @@ namespace KinaUnaWeb.Controllers
             {
                 progeny = new Progeny();
                 progeny.Admins = Constants.AdminEmail;
-                progeny.Id = 0;
+                progeny.Id = Constants.DefaultChildId;
                 progeny.BirthDay = DateTime.UtcNow;
-                progeny.Name = "No Children in the Database";
-                progeny.NickName = "No default child defined";
+                progeny.Name = Constants.AppName;
+                progeny.NickName = Constants.AppName;
                 progeny.TimeZone = Constants.DefaultTimezone;
                 progeny.PictureLink = Constants.ProfilePictureUrl;
             }
