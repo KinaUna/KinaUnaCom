@@ -325,7 +325,7 @@ namespace KinaUnaWeb.Controllers
                 Response.Cookies.Append(
                     Constants.LanguageCookieName,
                     CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), Domain = "." + Constants.AppRootDomain }
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), Domain = "." + Constants.WebAppUrl.ToLower().Replace("https://", "") }
                 );
             }
             return Redirect(returnUrl);

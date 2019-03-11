@@ -134,7 +134,7 @@ namespace KinaUnaWeb
                     options.ExpireTimeSpan = TimeSpan.FromDays(180);
                     if (!_env.IsDevelopment())
                     {
-                        options.Cookie.Domain = "." + Constants.AppRootDomain;
+                        options.Cookie.Domain = "." + Constants.WebAppUrl.ToLower().Replace("https://", "");
                     }
                 })
                 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>

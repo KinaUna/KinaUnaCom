@@ -95,7 +95,7 @@ namespace KinaUna.IDP
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
-            services.Configure<AppSettings>(Configuration);
+            // services.Configure<AppSettings>(Configuration);
 
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
@@ -150,6 +150,7 @@ namespace KinaUna.IDP
                 var cors = new DefaultCorsPolicyService(_loggerFactory.CreateLogger<DefaultCorsPolicyService>())
                 {
                     AllowedOrigins = { Constants.WebAppUrl, "https://" + Constants.AppRootDomain }
+                    
                 };
                 services.AddSingleton<ICorsPolicyService>(cors);
             }
@@ -190,9 +191,9 @@ namespace KinaUna.IDP
             )
         {
             // This will do the initial DB population
-            bool resetDb = true;
+            
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            InitializeDatabase(app, resetDb);
+            InitializeDatabase(app, Constants.ResetIdentityDb);
 
             if (_env.IsDevelopment())
             {
@@ -298,7 +299,53 @@ namespace KinaUna.IDP
                     userInfo.FirstName = "System";
                     userInfo.LastName = "Default User";
                     userInfo.Timezone = Constants.DefaultTimezone;
+                    userInfo.UserName = Constants.DefaultUserEmail;
                     userInfo.ViewChild = Constants.DefaultChildId;
+
+                    usersContext.UserInfoDb.Add(userInfo);
+                    usersContext.SaveChanges();
+                }
+
+                if (usersContext.ProgenyDb.SingleOrDefault(p => p.Id == Constants.DefaultChildId) == null)
+                {
+                    Progeny progeny = new Progeny();
+                    progeny.Admins = Constants.AdminEmail;
+                    progeny.BirthDay = DateTime.UtcNow;
+                    progeny.Name = Constants.AppName;
+                    progeny.NickName = Constants.AppName;
+                    progeny.PictureLink = Constants.ProfilePictureUrl;
+                    progeny.TimeZone = Constants.DefaultTimezone;
+
+                    usersContext.ProgenyDb.Add(progeny);
+                    usersContext.SaveChanges();
+                }
+
+                if (usersContext.UserAccessDb.SingleOrDefault(u =>
+                        u.ProgenyId == Constants.DefaultChildId &&
+                        u.UserId.ToUpper() == Constants.DefaultUserEmail.ToUpper()) == null)
+                {
+                    UserAccess userAccess = new UserAccess();
+                    userAccess.ProgenyId = Constants.DefaultChildId;
+                    userAccess.UserId = Constants.DefaultUserEmail.ToUpper();
+                    userAccess.AccessLevel = (int)AccessLevel.Users;
+                    userAccess.CanContribute = false;
+
+                    usersContext.UserAccessDb.Add(userAccess);
+                    usersContext.SaveChanges();
+                }
+
+                if (usersContext.UserAccessDb.SingleOrDefault(u =>
+                        u.ProgenyId == Constants.DefaultChildId &&
+                        u.UserId.ToUpper() == Constants.AdminEmail.ToUpper()) == null)
+                {
+                    UserAccess userAccess = new UserAccess();
+                    userAccess.ProgenyId = Constants.DefaultChildId;
+                    userAccess.UserId = Constants.AdminEmail.ToUpper();
+                    userAccess.AccessLevel = (int)AccessLevel.Private;
+                    userAccess.CanContribute = true;
+
+                    usersContext.UserAccessDb.Add(userAccess);
+                    usersContext.SaveChanges();
                 }
             }
         }

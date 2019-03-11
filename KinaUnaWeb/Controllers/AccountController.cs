@@ -63,7 +63,7 @@ namespace KinaUnaWeb.Controllers
             await HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
                 new AuthenticationProperties()
                 {
-                    RedirectUri = Url.Action("LoginCallback"),
+                    RedirectUri = Url.Action("LoginCallback")
                 });
         }
 

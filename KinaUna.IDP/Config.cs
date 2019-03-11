@@ -87,7 +87,6 @@ namespace KinaUna.IDP
         public static IEnumerable<Client> GetClients(IConfiguration configuration)
         {
             var webServerUrl = configuration.GetValue<string>("WebServer");
-            var webServerAzureUrl = configuration.GetValue<string>("WebServerAzure");
             var webServerLocal = configuration.GetValue<string>("WebServerLocal");
             var secretString = configuration.GetValue<string>("SecretString");
             List<string> corsList = new List<string>();
@@ -101,7 +100,7 @@ namespace KinaUna.IDP
                 new Client
                 {
                     ClientName = "KinaUnaWeb",
-                    ClientId = "kinaunawebclient",
+                    ClientId = Constants.WebAppClientName,
                     ClientUri = webServerUrl,
                     RequireConsent = false,
                     AllowedGrantTypes = GrantTypes.HybridAndClientCredentials,
@@ -166,55 +165,6 @@ namespace KinaUna.IDP
                     PostLogoutRedirectUris = new List<string>()
                     {
                         webServerLocal + "/signout-callback-oidc"
-                    },
-                    AllowedScopes =
-                    {
-                        IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.OfflineAccess,
-                        IdentityServerConstants.StandardScopes.Address,
-                        IdentityServerConstants.StandardScopes.Email,
-                        IdentityServerConstants.StandardScopes.Phone,
-                        "firstname",
-                        "middlename",
-                        "lastname",
-                        "roles",
-                        "timezone",
-                        "viewchild",
-                        "joindate",
-                        Constants.ProgenyApiName,
-                        Constants.MediaApiName
-                    },
-                    ClientSecrets =
-                    {
-                        new Secret(secretString.Sha256())
-                    }
-                },
-                new Client
-                {
-                    ClientName = "KinaUnaWebAzure",
-                    ClientId = "kinaunawebclientAzure",
-                    ClientUri = webServerAzureUrl,
-                    RequireConsent = false,
-                    AllowedGrantTypes = GrantTypes.HybridAndClientCredentials,
-                    AccessTokenType = AccessTokenType.Reference,
-                    IdentityTokenLifetime = 2592000,
-                    AuthorizationCodeLifetime = 2592000,
-                    AccessTokenLifetime = 2592000,
-                    AllowOfflineAccess = true,
-                    AlwaysIncludeUserClaimsInIdToken = false,
-                    RefreshTokenExpiration = TokenExpiration.Sliding,
-                    //AbsoluteRefreshTokenLifetime = ...
-                    UpdateAccessTokenClaimsOnRefresh = true,
-                    AllowedCorsOrigins = corsList,
-                    RedirectUris = new List<string>()
-                    {
-                        webServerUrl + "/signin-oidc"
-
-                    },
-                    PostLogoutRedirectUris = new List<string>()
-                    {
-                        webServerUrl + "/signout-callback-oidc"
                     },
                     AllowedScopes =
                     {
