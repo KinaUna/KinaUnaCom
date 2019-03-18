@@ -21,6 +21,7 @@ using System.Security.Cryptography.X509Certificates;
 using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace KinaUna.IDP
 {
@@ -40,6 +41,13 @@ namespace KinaUna.IDP
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => false;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
 
             services.AddDbContext<ProgenyDbContext>(options =>
                 options.UseSqlServer(Configuration["ProgenyDefaultConnection"],
@@ -94,9 +102,7 @@ namespace KinaUna.IDP
                 })
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
-
-            // services.Configure<AppSettings>(Configuration);
-
+            
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
                 options.TokenLifespan = TimeSpan.FromDays(90);
@@ -144,20 +150,12 @@ namespace KinaUna.IDP
                     options.AddPolicy("KinaUnaCors",
                         builder =>
                         {
-                            builder.WithOrigins("https://*." + Constants.AppRootDomain).SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+                            builder.WithOrigins(Constants.WebAppUrl).SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                         });
                 });
-                var cors = new DefaultCorsPolicyService(_loggerFactory.CreateLogger<DefaultCorsPolicyService>())
-                {
-                    AllowedOrigins = { Constants.WebAppUrl, "https://" + Constants.AppRootDomain }
-                    
-                };
-                services.AddSingleton<ICorsPolicyService>(cors);
             }
-            
 
             services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix);
-            
 
             services.AddIdentityServer(x =>
                 {
@@ -184,15 +182,12 @@ namespace KinaUna.IDP
                     options.EnableTokenCleanup = true;
                     options.TokenCleanupInterval = 3600;
                 }).Services.AddTransient<IProfileService, ProfileService>();
-
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment hostingEnvironment
             )
         {
             // This will do the initial DB population
-            
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             InitializeDatabase(app, Constants.ResetIdentityDb);
 
             if (_env.IsDevelopment())
@@ -219,9 +214,8 @@ namespace KinaUna.IDP
                 CookieName = Constants.LanguageCookieName
             };
             localizationOptions.RequestCultureProviders.Insert(0, provider);
-
+            
             app.UseRequestLocalization(localizationOptions);
-
             app.UseIdentityServer();
             app.UseStaticFiles();
             app.UseMvcWithDefaultRoute();
@@ -238,7 +232,7 @@ namespace KinaUna.IDP
 
                 var usersContext = serviceScope.ServiceProvider.GetRequiredService<ProgenyDbContext>();
 
-                context.Database.Migrate();
+                usersContext.Database.Migrate();
 
                 if (resetDb)
                 {

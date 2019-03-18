@@ -50,9 +50,8 @@ namespace KinaUnaWeb
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                // Todo: Fix consent to work with my cookies and language selection
                 options.CheckConsentNeeded = context => false;
-                options.MinimumSameSitePolicy = SameSiteMode.Lax;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
             });
             
             services.AddDbContext<WebDbContext>(options =>
