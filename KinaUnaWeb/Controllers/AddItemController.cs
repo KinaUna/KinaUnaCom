@@ -10,9 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using KinaUna.Data;
-using KinaUna.Data.Models;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
+using KinaUna.Data;
 
 namespace KinaUnaWeb.Controllers
 {
@@ -66,7 +66,7 @@ namespace KinaUnaWeb.Controllers
                     foreach (Progeny prog in accessList)
                     {
                         SelectListItem selItem = new SelectListItem()
-                            {Text = accessList.Single(p => p.Id == prog.Id).NickName, Value = prog.Id.ToString()};
+                        { Text = accessList.Single(p => p.Id == prog.Id).NickName, Value = prog.Id.ToString() };
                         if (prog.Id == _progId)
                         {
                             selItem.Selected = true;
@@ -74,12 +74,12 @@ namespace KinaUnaWeb.Controllers
                         model.ProgenyList.Add(selItem);
                     }
                 }
-                
+
 
                 model.Owners = userEmail;
                 model.Author = userinfo.UserId;
             }
-            
+
 
             return View(model);
         }
@@ -204,7 +204,7 @@ namespace KinaUnaWeb.Controllers
                             }
                         }
                     }
-                    
+
                     pictureList.Add(newPicture);
                 }
             }
@@ -244,7 +244,11 @@ namespace KinaUnaWeb.Controllers
             {
                 return RedirectToRoute(new
                 {
-                    controller = "Pictures", action = "Picture", id = model.PictureId, childId = model.ProgenyId, sortBy = model.SortBy
+                    controller = "Pictures",
+                    action = "Picture",
+                    id = model.PictureId,
+                    childId = model.ProgenyId,
+                    sortBy = model.SortBy
                 });
             }
 
@@ -356,7 +360,7 @@ namespace KinaUnaWeb.Controllers
                 }
             }
 
-            
+
             if (pictureDeleted)
             {
                 TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
@@ -421,7 +425,7 @@ namespace KinaUnaWeb.Controllers
                 }
             }
             // Todo: else, error, show info
-            
+
 
             // Todo: show confirmation info, instead of gallery page.
             return RedirectToAction("Index", "Pictures");
@@ -434,7 +438,7 @@ namespace KinaUnaWeb.Controllers
         {
             string userEmail = HttpContext.User.FindFirst("email")?.Value;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
-            
+
             Comment cmnt = new Comment();
 
             cmnt.CommentThreadNumber = model.CommentThreadNumber;
@@ -453,11 +457,11 @@ namespace KinaUnaWeb.Controllers
                 {
                     string imgLink = Constants.WebAppUrl + "/Pictures/Picture/" + model.ItemId + "?childId=" + model.ProgenyId;
                     List<string> emails = progeny.Admins.Split(",").ToList();
-                    
+
                     foreach (string toMail in emails)
                     {
-                         await _emailSender.SendEmailAsync(toMail, "New Comment on " + progeny.NickName + "'s Picture",
-                            "A comment was added to " + progeny.NickName + "'s picture by " + cmnt.DisplayName + ":<br/><br/>" + cmnt.CommentText + "<br/><br/>Picture Link: <a href=\"" + imgLink + "\">" + imgLink + "</a>");
+                        await _emailSender.SendEmailAsync(toMail, "New Comment on " + progeny.NickName + "'s Picture",
+                           "A comment was added to " + progeny.NickName + "'s picture by " + cmnt.DisplayName + ":<br/><br/>" + cmnt.CommentText + "<br/><br/>Picture Link: <a href=\"" + imgLink + "\">" + imgLink + "</a>");
                     }
                     string authorName = "";
                     if (!String.IsNullOrEmpty(userinfo.FirstName))
@@ -569,7 +573,7 @@ namespace KinaUnaWeb.Controllers
             }
             return View(model);
         }
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadVideo(UploadVideoViewModel model)
@@ -788,11 +792,11 @@ namespace KinaUnaWeb.Controllers
             {
                 newVideo.Altitude = model.Altitude;
             }
-            
+
             await _mediaHttpClient.UpdateVideo(newVideo);
 
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId ==newVideo.VideoId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Video);
+                t.ItemId == newVideo.VideoId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Video);
             if (tItem != null)
             {
                 if (newVideo.VideoTime.HasValue)
@@ -830,7 +834,7 @@ namespace KinaUnaWeb.Controllers
                     model.IsAdmin = true;
                 }
             }
-            
+
             ViewBag.NotAuthorized = "You do not have sufficient access rights to modify this picture.";
             model.ProgenyId = video.ProgenyId;
             model.VideoId = videoId;
@@ -908,8 +912,8 @@ namespace KinaUnaWeb.Controllers
                     List<string> emails = progeny.Admins.Split(",").ToList();
                     foreach (string toMail in emails)
                     {
-                         await _emailSender.SendEmailAsync(toMail, "New Comment on " + progeny.NickName + "'s Picture",
-                            "A comment was added to " + progeny.NickName + "'s picture by " + cmnt.DisplayName + ":<br/><br/>" + cmnt.CommentText + "<br/><br/>Picture Link: <a href=\"" + imgLink + "\">" + imgLink + "</a>");
+                        await _emailSender.SendEmailAsync(toMail, "New Comment on " + progeny.NickName + "'s Picture",
+                           "A comment was added to " + progeny.NickName + "'s picture by " + cmnt.DisplayName + ":<br/><br/>" + cmnt.CommentText + "<br/><br/>Picture Link: <a href=\"" + imgLink + "\">" + imgLink + "</a>");
                     }
                     List<UserAccess> usersToNotif = await _progenyHttpClient.GetProgenyAccessList(model.ProgenyId);
                     Video vid = await _mediaHttpClient.GetVideo(model.ItemId, userinfo.Timezone);
@@ -1006,7 +1010,8 @@ namespace KinaUnaWeb.Controllers
                     {
                         SelectListItem selItem = new SelectListItem()
                         {
-                            Text = accessList.Single(p => p.Id == prog.Id).NickName, Value = prog.Id.ToString()
+                            Text = accessList.Single(p => p.Id == prog.Id).NickName,
+                            Value = prog.Id.ToString()
                         };
                         if (prog.Id == _progId)
                         {
@@ -1036,7 +1041,7 @@ namespace KinaUnaWeb.Controllers
                 // Todo: Show that no children are available to add info to.
                 return RedirectToAction("Index");
             }
-            
+
             Note noteItem = new Note();
             noteItem.Title = model.Title;
             noteItem.ProgenyId = model.ProgenyId;
@@ -1247,7 +1252,7 @@ namespace KinaUnaWeb.Controllers
             List<Progeny> accessList = new List<Progeny>();
             if (User.Identity.IsAuthenticated && userEmail != null && userinfo.UserId != null)
             {
-                
+
                 accessList = await _progenyHttpClient.GetProgenyAdminList(userEmail);
                 if (accessList.Any())
                 {
@@ -1357,11 +1362,11 @@ namespace KinaUnaWeb.Controllers
                         var startTime = TimeZoneInfo.ConvertTimeFromUtc(eventItem.StartTime.Value,
                                 TimeZoneInfo.FindSystemTimeZoneById(uaUserInfo.Timezone));
                         string eventTimeString = "\r\nStart: " + startTime.ToString("dd-MMM-yyyy HH:mm");
-                        
+
                         var endTime = TimeZoneInfo.ConvertTimeFromUtc(eventItem.EndTime.Value,
                                 TimeZoneInfo.FindSystemTimeZoneById(uaUserInfo.Timezone));
                         eventTimeString = eventTimeString + "\r\nEnd: " + endTime.ToString("dd-MMM-yyyy HH:mm");
-                        
+
                         WebNotification notification = new WebNotification();
                         notification.To = uaUserInfo.UserId;
                         notification.From = authorName;
@@ -1639,7 +1644,7 @@ namespace KinaUnaWeb.Controllers
                                 TimeZoneInfo.FindSystemTimeZoneById(uaUserInfo.Timezone));
                             vocabTimeString = "\r\nDate: " + startTime.ToString("dd-MMM-yyyy");
                         }
-                        
+
                         WebNotification notification = new WebNotification();
                         notification.To = uaUserInfo.UserId;
                         notification.From = authorName;
@@ -1902,7 +1907,7 @@ namespace KinaUnaWeb.Controllers
                     if (uaUserInfo.UserId != "Unknown")
                     {
                         string skillTimeString = "\r\nDate: " + skillItem.SkillFirstObservation.Value.ToString("dd-MMM-yyyy");
-                        
+
                         WebNotification notification = new WebNotification();
                         notification.To = uaUserInfo.UserId;
                         notification.From = authorName;
@@ -2102,7 +2107,7 @@ namespace KinaUnaWeb.Controllers
                     }
                 }
             }
-            
+
             string tagItems = "[";
             if (tagsList.Any())
             {
@@ -2357,7 +2362,7 @@ namespace KinaUnaWeb.Controllers
                         await _imageStore.DeleteImage(oldPictureLink, "friends");
                     }
                 }
-                
+
                 _context.FriendsDb.Update(model);
                 await _context.SaveChangesAsync();
 
@@ -3041,7 +3046,7 @@ namespace KinaUnaWeb.Controllers
                         await _imageStore.DeleteImage(oldPictureLink, "contacts");
                     }
                 }
-                
+
                 if (model.DateAdded == null)
                 {
                     model.DateAdded = DateTime.UtcNow;
@@ -3416,6 +3421,7 @@ namespace KinaUnaWeb.Controllers
                 // Todo: Show no access info.
                 return RedirectToAction("Index");
             }
+
             Sleep sleepItem = new Sleep();
             sleepItem.ProgenyId = model.ProgenyId;
             sleepItem.Progeny = prog;
@@ -3434,27 +3440,10 @@ namespace KinaUnaWeb.Controllers
             sleepItem.AccessLevel = model.AccessLevel;
             sleepItem.Author = userinfo.UserId;
 
-            await _context.SleepDb.AddAsync(sleepItem);
-            await _context.SaveChangesAsync();
+            sleepItem = await _progenyHttpClient.AddSleep(sleepItem);
+            //await _context.SleepDb.AddAsync(sleepItem);
+            //await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = sleepItem.ProgenyId;
-            tItem.AccessLevel = sleepItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Sleep;
-            tItem.ItemId = sleepItem.SleepId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            if (sleepItem.SleepStart != null)
-            {
-                tItem.ProgenyTime = sleepItem.SleepStart;
-            }
-            else
-            {
-                tItem.ProgenyTime = DateTime.UtcNow;
-            }
-
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -3490,7 +3479,7 @@ namespace KinaUnaWeb.Controllers
                         WebNotification notification = new WebNotification();
                         notification.To = uaUserInfo.UserId;
                         notification.From = authorName;
-                        notification.Message = "Start: " + sleepStart.ToString("dd-MMM-yyyy HH:mm") + "\r\nEnd: " +sleepEnd.ToString("dd-MMM-yyyy HH:mm");
+                        notification.Message = "Start: " + sleepStart.ToString("dd-MMM-yyyy HH:mm") + "\r\nEnd: " + sleepEnd.ToString("dd-MMM-yyyy HH:mm");
                         notification.DateTime = DateTime.UtcNow;
                         notification.Icon = userinfo.ProfilePicture;
                         notification.Title = "Sleep Added for " + prog.NickName;
@@ -3504,7 +3493,7 @@ namespace KinaUnaWeb.Controllers
                     }
                 }
             }
-            
+
             // Todo: send notification to others.
             return RedirectToAction("Index", "Sleep");
         }
@@ -3513,7 +3502,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> EditSleep(int itemId)
         {
             SleepViewModel model = new SleepViewModel();
-            Sleep sleep = await _context.SleepDb.SingleAsync(s => s.SleepId == itemId);
+            Sleep sleep = await _progenyHttpClient.GetSleepItem(itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3599,18 +3588,10 @@ namespace KinaUnaWeb.Controllers
                     model.SleepRating = 3;
                 }
                 model.SleepNotes = sleep.SleepNotes;
-                _context.SleepDb.Update(model);
-                await _context.SaveChangesAsync();
+                await _progenyHttpClient.UpdateSleep(model);
+                //_context.SleepDb.Update(model);
+                //await _context.SaveChangesAsync();
 
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.SleepId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Sleep);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.SleepStart;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
             }
             return RedirectToAction("Index", "Sleep");
         }
@@ -3618,7 +3599,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteSleep(int itemId)
         {
-            Sleep model = await _context.SleepDb.SingleAsync(s => s.SleepId == itemId);
+            Sleep model = await _progenyHttpClient.GetSleepItem(itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3635,7 +3616,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteSleep(Sleep model)
         {
-            Sleep sleep = await _context.SleepDb.SingleAsync(s => s.SleepId == model.SleepId);
+            Sleep sleep = await _progenyHttpClient.GetSleepItem(model.SleepId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3645,16 +3626,10 @@ namespace KinaUnaWeb.Controllers
                 // Todo: Show no access info.
                 return RedirectToAction("Index");
             }
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.SleepId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Sleep);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
 
-            _context.SleepDb.Remove(sleep);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.DeleteSleepItem(model.SleepId);
+            //_context.SleepDb.Remove(sleep);
+            //await _context.SaveChangesAsync();
 
             return RedirectToAction("Index", "Sleep");
         }
@@ -3714,7 +3689,7 @@ namespace KinaUnaWeb.Controllers
                     }
                 }
             }
-            
+
 
             string tagItems = "[";
             if (tagsList.Any())
@@ -4050,7 +4025,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteFile(FileItem model)
         {
-            
+
             throw new NotImplementedException();
         }
     }

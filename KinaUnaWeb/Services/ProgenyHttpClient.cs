@@ -10,12 +10,12 @@ using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using KinaUna.Data.Models;
 using KinaUna.Data;
+using KinaUna.Data.Models;
 
 namespace KinaUnaWeb.Services
 {
-    public class ProgenyHttpClient:IProgenyHttpClient
+    public class ProgenyHttpClient : IProgenyHttpClient
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
@@ -36,6 +36,7 @@ namespace KinaUnaWeb.Services
             var tokenResponse = await discoveryClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = _configuration.GetValue<string>("AuthenticationServer") + "/connect/token",
+
                 ClientId = _configuration.GetValue<string>("AuthenticationServerClientId"),
                 ClientSecret = _configuration.GetValue<string>("AuthenticationServerClientSecret"),
                 Scope = Constants.ProgenyApiName
@@ -96,7 +97,7 @@ namespace KinaUnaWeb.Services
             {
                 var userinfoAsString = await userinfoResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
                 userinfo = JsonConvert.DeserializeObject<UserInfo>(userinfoAsString);
-                
+
             }
 
             return userinfo;
@@ -156,7 +157,7 @@ namespace KinaUnaWeb.Services
             newUserinfoHttpClient.DefaultRequestHeaders.Accept.Clear();
             newUserinfoHttpClient.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
-            
+
             string newUserinfoApiPath = "/api/userinfo/" + userinfo.UserId;
             var newUserinfoUri = clientUri + newUserinfoApiPath;
 
@@ -178,7 +179,7 @@ namespace KinaUnaWeb.Services
             if (!string.IsNullOrWhiteSpace(accessToken))
             {
                 httpClient.SetBearerToken(accessToken);
-                
+
             }
             else
             {
@@ -193,7 +194,7 @@ namespace KinaUnaWeb.Services
             Progeny progeny = new Progeny();
             string progenyApiPath = "/api/progeny/" + progenyId;
             var progenyUri = clientUri + progenyApiPath;
-            
+
 
             try
             {
@@ -235,7 +236,7 @@ namespace KinaUnaWeb.Services
             var newProgenyUri = clientUri + newProgenyApiPath;
 
             var newProgeny = await newProgenyHttpClient.PostAsync(newProgenyUri, new StringContent(JsonConvert.SerializeObject(progeny), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
-            
+
             return JsonConvert.DeserializeObject<Progeny>(newProgeny);
         }
 
@@ -263,7 +264,7 @@ namespace KinaUnaWeb.Services
 
             string updateProgenyApiPath = "/api/progeny/" + progeny.Id;
             var updateProgenyUri = clientUri + updateProgenyApiPath;
-            
+
             var updateProgenyResponseString = await updateProgenyHttpClient.PutAsync(updateProgenyUri, new StringContent(JsonConvert.SerializeObject(progeny), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<Progeny>(updateProgenyResponseString);
         }
@@ -489,7 +490,7 @@ namespace KinaUnaWeb.Services
             string accessApiPath = "/api/access/";
             var accessUri = clientUri + accessApiPath;
             await httpClient.PostAsync(accessUri, new StringContent(JsonConvert.SerializeObject(userAccess), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
-            
+
             return userAccess;
         }
 
@@ -548,6 +549,161 @@ namespace KinaUnaWeb.Services
             await httpClient.DeleteAsync(accessUri).ConfigureAwait(false);
 
             return true;
+        }
+
+        public async Task<Sleep> GetSleepItem(int sleepId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Sleep sleepItem = new Sleep();
+            string sleepApiPath = "/api/sleep/" + sleepId;
+            var sleepUri = clientUri + sleepApiPath;
+            var sleepResponse = await httpClient.GetAsync(sleepUri).ConfigureAwait(false);
+            if (sleepResponse.IsSuccessStatusCode)
+            {
+                var sleepAsString = await sleepResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                sleepItem = JsonConvert.DeserializeObject<Sleep>(sleepAsString);
+            }
+
+            return sleepItem;
+        }
+
+        public async Task<Sleep> AddSleep(Sleep sleep)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string sleepApiPath = "/api/sleep/";
+            var sleepUri = clientUri + sleepApiPath;
+            await httpClient.PostAsync(sleepUri, new StringContent(JsonConvert.SerializeObject(sleep), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return sleep;
+        }
+
+        public async Task<Sleep> UpdateSleep(Sleep sleep)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateSleepHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateSleepHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateSleepHttpClient.SetBearerToken(accessToken);
+            }
+            updateSleepHttpClient.BaseAddress = new Uri(clientUri);
+            updateSleepHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateSleepHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateSleepApiPath = "/api/sleep/" + sleep.SleepId;
+            var updateSleepUri = clientUri + updateSleepApiPath;
+            var updateAccessResponseString = await updateSleepHttpClient.PutAsync(updateSleepUri, sleep, new JsonMediaTypeFormatter());
+            string returnString = await updateAccessResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Sleep>(returnString);
+        }
+
+        public async Task<bool> DeleteSleepItem(int sleepId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string sleepApiPath = "/api/sleep/" + sleepId;
+            var sleepUri = clientUri + sleepApiPath;
+            await httpClient.DeleteAsync(sleepUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Sleep>> GetSleepList(int progenyId, int accessLevel)
+        {
+            List<Sleep> progenySleepList = new List<Sleep>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string sleepApiPath = "/api/sleep/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var sleepUri = clientUri + sleepApiPath;
+            var sleepResponse = await httpClient.GetAsync(sleepUri).ConfigureAwait(false);
+            if (sleepResponse.IsSuccessStatusCode)
+            {
+                var sleepAsString = await sleepResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenySleepList = JsonConvert.DeserializeObject<List<Sleep>>(sleepAsString);
+            }
+
+            return progenySleepList;
         }
     }
 }

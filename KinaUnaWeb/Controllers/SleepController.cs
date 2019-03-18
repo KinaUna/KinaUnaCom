@@ -7,23 +7,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
-using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace KinaUnaWeb.Controllers
 {
     public class SleepController : Controller
     {
-        private readonly WebDbContext _context;
         private readonly IProgenyHttpClient _progenyHttpClient;
         private int _progId = Constants.DefaultChildId;
         private bool _userIsProgenyAdmin;
         private readonly string _defaultUser = Constants.DefaultUserEmail;
 
-        public SleepController(WebDbContext context, IProgenyHttpClient progenyHttpClient)
+        public SleepController(IProgenyHttpClient progenyHttpClient)
         {
-            _context = context; // Todo: Replace _context with httpClient
             _progenyHttpClient = progenyHttpClient;
         }
 
@@ -32,7 +28,7 @@ namespace KinaUnaWeb.Controllers
         {
             _progId = childId;
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
-            
+
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
             if (childId == 0 && userinfo.ViewChild > 0)
             {
@@ -44,17 +40,6 @@ namespace KinaUnaWeb.Controllers
             }
 
             Progeny progeny = await _progenyHttpClient.GetProgeny(_progId);
-            if (progeny == null)
-            {
-                progeny = new Progeny();
-                progeny.Admins = Constants.AdminEmail;
-                progeny.Id = 0;
-                progeny.BirthDay = DateTime.UtcNow;
-                progeny.Name = "No Children in the Database";
-                progeny.NickName = "No default child defined";
-                progeny.TimeZone = Constants.DefaultTimezone;
-                progeny.PictureLink = Constants.ProfilePictureUrl;
-            }
             List<UserAccess> accessList = await _progenyHttpClient.GetProgenyAccessList(_progId);
 
             int userAccessLevel = (int)AccessLevel.Public;
@@ -79,7 +64,7 @@ namespace KinaUnaWeb.Controllers
             model.SleepTotal = TimeSpan.Zero;
             model.SleepLastYear = TimeSpan.Zero;
             model.SleepLastMonth = TimeSpan.Zero;
-            List<Sleep> sList = _context.SleepDb.AsNoTracking().Where(s => s.ProgenyId == _progId).ToList();
+            List<Sleep> sList = await _progenyHttpClient.GetSleepList(_progId, userAccessLevel); // _context.SleepDb.AsNoTracking().Where(s => s.ProgenyId == _progId).ToList();
             List<Sleep> sleepList = new List<Sleep>();
             DateTime yearAgo = new DateTime(DateTime.UtcNow.Year - 1, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, DateTime.UtcNow.Minute, 0);
             DateTime monthAgo = DateTime.UtcNow - TimeSpan.FromDays(30);
@@ -138,7 +123,7 @@ namespace KinaUnaWeb.Controllers
                 model.LastYearAverage = TimeSpan.Zero;
                 model.LastMonthAverage = TimeSpan.Zero;
             }
-            
+
             model.IsAdmin = _userIsProgenyAdmin;
             model.Progeny = progeny;
 
@@ -150,7 +135,7 @@ namespace KinaUnaWeb.Controllers
                 {
                     durationStartDate = durationStartDate + chartItem.SleepDuration.TotalMinutes;
                     Sleep slpItem = chartList.SingleOrDefault(s => s.SleepStart.Date == chartItem.SleepStart.Date);
-                    if ( slpItem != null)
+                    if (slpItem != null)
                     {
                         slpItem.SleepDuration += TimeSpan.FromMinutes(durationStartDate);
                     }
@@ -215,7 +200,7 @@ namespace KinaUnaWeb.Controllers
         {
             _progId = childId;
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
-            
+
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
             if (childId == 0 && userinfo.ViewChild > 0)
             {
@@ -244,8 +229,8 @@ namespace KinaUnaWeb.Controllers
 
             SleepViewModel model = new SleepViewModel();
             model.ProgenyId = _progId;
-            
-            List<Sleep> allSleepList = _context.SleepDb.AsNoTracking().Where(s => s.ProgenyId == _progId).ToList();
+
+            List<Sleep> allSleepList = await _progenyHttpClient.GetSleepList(_progId, userAccessLevel); //_context.SleepDb.AsNoTracking().Where(s => s.ProgenyId == _progId).ToList();
             List<Sleep> sleepList = new List<Sleep>();
 
             if (allSleepList.Count != 0)
