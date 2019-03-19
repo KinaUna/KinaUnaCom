@@ -15,16 +15,14 @@ namespace KinaUnaWeb.Controllers
 {
     public class ContactsController : Controller
     {
-        private readonly WebDbContext _context;
         private int _progId = Constants.DefaultChildId;
         private readonly IProgenyHttpClient _progenyHttpClient;
         private readonly ImageStore _imageStore;
         private bool _userIsProgenyAdmin;
         private readonly string _defaultUser = Constants.DefaultUserEmail;
 
-        public ContactsController(WebDbContext context, IProgenyHttpClient progenyHttpClient, ImageStore imageStore)
+        public ContactsController(IProgenyHttpClient progenyHttpClient, ImageStore imageStore)
         {
-            _context = context;
             _progenyHttpClient = progenyHttpClient;
             _imageStore = imageStore;
         }
@@ -34,7 +32,7 @@ namespace KinaUnaWeb.Controllers
         {
             _progId = childId;
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
-            
+
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
             if (childId == 0 && userinfo.ViewChild > 0)
             {
@@ -52,17 +50,6 @@ namespace KinaUnaWeb.Controllers
 
 
             Progeny progeny = await _progenyHttpClient.GetProgeny(_progId);
-            if (progeny == null)
-            {
-                progeny = new Progeny();
-                progeny.Admins = Constants.AdminEmail;
-                progeny.Id = 0;
-                progeny.BirthDay = DateTime.UtcNow;
-                progeny.Name = "No Children in the Database";
-                progeny.NickName = "No default child defined";
-                progeny.TimeZone = Constants.DefaultTimezone;
-                progeny.PictureLink = Constants.ProfilePictureUrl;
-            }
             List<UserAccess> accessList = await _progenyHttpClient.GetProgenyAccessList(_progId);
 
             int userAccessLevel = (int)AccessLevel.Public;
@@ -83,13 +70,13 @@ namespace KinaUnaWeb.Controllers
             }
 
             List<ContactViewModel> model = new List<ContactViewModel>();
-            
+
             List<string> tagsList = new List<string>();
 
-            List<Contact> contactList = _context.ContactsDb.AsNoTracking().Where(w => w.ProgenyId == _progId).ToList();
+            List<Contact> contactList = await _progenyHttpClient.GetContactsList(_progId, userAccessLevel); // _context.ContactsDb.AsNoTracking().Where(w => w.ProgenyId == _progId).ToList();
             if (!string.IsNullOrEmpty(tagFilter))
             {
-                contactList = _context.ContactsDb.AsNoTracking().Where(f => f.ProgenyId == _progId && f.Tags.Contains(tagFilter)).ToList();
+                contactList = contactList.Where(c => c.Tags.ToUpper().Contains(tagFilter.ToUpper())).ToList();
             }
 
             if (contactList.Count != 0)
@@ -117,7 +104,7 @@ namespace KinaUnaWeb.Controllers
                     contactViewModel.Website = contact.Website;
                     if (contact.AddressIdNumber != null)
                     {
-                        Address address = await _context.AddressDb.AsNoTracking().SingleAsync(a => a.AddressId == contact.AddressIdNumber);
+                        Address address = await _progenyHttpClient.GetAddress(contact.AddressIdNumber.Value); // _context.AddressDb.AsNoTracking().SingleAsync(a => a.AddressId == contact.AddressIdNumber);
                         contactViewModel.AddressLine1 = address.AddressLine1;
                         contactViewModel.AddressLine2 = address.AddressLine2;
                         contactViewModel.City = address.City;
@@ -177,12 +164,12 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> ContactDetails(int contactId, string tagFilter)
         {
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
-            
-            Contact contact = await _context.ContactsDb.AsNoTracking().SingleAsync(c => c.ContactId == contactId);
+
+            Contact contact = await _progenyHttpClient.GetContact(contactId); // _context.ContactsDb.AsNoTracking().SingleAsync(c => c.ContactId == contactId);
             Progeny progeny = await _progenyHttpClient.GetProgeny(contact.ProgenyId);
             List<UserAccess> accessList = await _progenyHttpClient.GetProgenyAccessList(_progId);
 
-            int userAccessLevel =  (int)AccessLevel.Public;
+            int userAccessLevel = (int)AccessLevel.Public;
 
             if (accessList.Count != 0)
             {
@@ -201,7 +188,7 @@ namespace KinaUnaWeb.Controllers
 
 
             ContactViewModel model = new ContactViewModel();
-            
+
             if (contact.AccessLevel < userAccessLevel)
             {
                 RedirectToAction("Index");
@@ -226,7 +213,7 @@ namespace KinaUnaWeb.Controllers
             model.Tags = contact.Tags;
             if (contact.AddressIdNumber != null)
             {
-                Address address = await _context.AddressDb.AsNoTracking().SingleAsync(a => a.AddressId == contact.AddressIdNumber);
+                Address address = await _progenyHttpClient.GetAddress(contact.AddressIdNumber.Value); // _context.AddressDb.AsNoTracking().SingleAsync(a => a.AddressId == contact.AddressIdNumber);
                 model.AddressLine1 = address.AddressLine1;
                 model.AddressLine2 = address.AddressLine2;
                 model.City = address.City;
@@ -243,7 +230,7 @@ namespace KinaUnaWeb.Controllers
             }
 
             List<string> tagsList = new List<string>();
-            var contactsList1 = _context.ContactsDb.AsNoTracking().Where(c => c.ProgenyId == model.ProgenyId).ToList();
+            var contactsList1 = await _progenyHttpClient.GetContactsList(model.ProgenyId, userAccessLevel); // _context.ContactsDb.AsNoTracking().Where(c => c.ProgenyId == model.ProgenyId).ToList();
             foreach (Contact cont in contactsList1)
             {
                 if (!String.IsNullOrEmpty(cont.Tags))
