@@ -3,7 +3,6 @@ using KinaUnaMediaApi.Models.ViewModels;
 using KinaUnaMediaApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,7 +11,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace KinaUnaMediaApi.Controllers
 {
@@ -23,33 +24,41 @@ namespace KinaUnaMediaApi.Controllers
     public class PicturesController : ControllerBase
     {
         private readonly MediaDbContext _context;
+        private readonly ProgenyDbContext _progenyDbContext;
         private readonly ImageStore _imageStore;
 
-        public PicturesController(MediaDbContext context, ImageStore imageStore)
+        public PicturesController(MediaDbContext context, ProgenyDbContext progenyDbContext, ImageStore imageStore)
         {
             _context = context;
+            _progenyDbContext = progenyDbContext;
             _imageStore = imageStore;
-        }
-        // GET api/pictures
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            List<Picture> resultList = await _context.PicturesDb.AsNoTracking().ToListAsync();
-            return Ok(resultList);
         }
 
         // GET api/pictures/page[?pageSize=3&pageIndex=10&progenyId=2&accessLevel=1&tagFilter=funny]
         [HttpGet]
         [Route("[action]")]
-        public async Task<IActionResult> Page([FromQuery]int pageSize = 8, [FromQuery]int pageIndex = 1, [FromQuery] int progenyId = 2, [FromQuery] int accessLevel = 5, [FromQuery] string tagFilter = "", [FromQuery] int sortBy = 1)
-
+        public async Task<IActionResult> Page([FromQuery]int pageSize = 8, [FromQuery]int pageIndex = 1, [FromQuery] int progenyId = Constants.DefaultChildId, [FromQuery] int accessLevel = 5, [FromQuery] string tagFilter = "", [FromQuery] int sortBy = 1)
         {
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.SingleOrDefault(u =>
+                u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null && progenyId != Constants.DefaultChildId)
+            {
+                return Unauthorized();
+            }
+
             if (pageIndex < 1)
             {
                 pageIndex = 1;
             }
 
-            List<Picture> allItems; 
+            List<Picture> allItems;
             if (tagFilter != "")
             {
                 allItems = await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToListAsync();
@@ -77,7 +86,7 @@ namespace KinaUnaMediaApi.Controllers
                 {
                     pic.PictureNumber = pictureCounter;
                 }
-                
+
                 pictureCounter++;
                 if (!String.IsNullOrEmpty(pic.Tags))
                 {
@@ -91,7 +100,7 @@ namespace KinaUnaMediaApi.Controllers
                     }
                 }
             }
-            
+
             var itemsOnPage = allItems
                 .Skip(pageSize * (pageIndex - 1))
                 .Take(pageSize)
@@ -122,8 +131,23 @@ namespace KinaUnaMediaApi.Controllers
         public async Task<IActionResult> PictureViewModel(int id, int accessLevel, [FromQuery] int sortBy = 1)
         {
             Picture picture = await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureId == id);
+
             if (picture != null)
             {
+                // Check if user should be allowed access.
+                string userEmail = Constants.DefaultUserEmail;
+                if (User != null)
+                {
+                    userEmail = User.GetEmail();
+                }
+                UserAccess userAccess = _progenyDbContext.UserAccessDb.SingleOrDefault(u =>
+                    u.ProgenyId == picture.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess == null && picture.ProgenyId != Constants.DefaultChildId)
+                {
+                    return Unauthorized();
+                }
+
                 PictureViewModel model = new PictureViewModel();
                 model.PictureId = picture.PictureId;
                 model.PictureTime = picture.PictureTime;
@@ -173,7 +197,7 @@ namespace KinaUnaMediaApi.Controllers
                     }
                     model.PictureNumber = currentIndex + 1;
                     model.PictureCount = pictureList.Count;
-                    if(currentIndex > 0)
+                    if (currentIndex > 0)
                     {
                         model.PrevPicture = pictureList[currentIndex - 1].PictureId;
                     }
@@ -197,7 +221,7 @@ namespace KinaUnaMediaApi.Controllers
                         model.NextPicture = model.PrevPicture;
                         model.PrevPicture = tempVal;
                     }
-                   
+
                 }
                 string tagItems = "[";
                 if (tagsList.Any())
@@ -223,10 +247,23 @@ namespace KinaUnaMediaApi.Controllers
         [Route("[action]/{id}/{accessLevel}")]
         public async Task<IActionResult> Progeny(int id, int accessLevel)
         {
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.SingleOrDefault(u =>
+                u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null && id != Constants.DefaultChildId)
+            {
+                return Unauthorized();
+            }
+
             List<Picture> picturesList = await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == id && p.AccessLevel >= accessLevel).ToListAsync();
             if (picturesList.Any())
             {
-                
                 return Ok(picturesList);
             }
             Progeny progeny = new Progeny();
@@ -257,8 +294,22 @@ namespace KinaUnaMediaApi.Controllers
             Picture picture = await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureLink == id);
             if (picture != null)
             {
+                // Check if user should be allowed access.
+                string userEmail = Constants.DefaultUserEmail;
+                if (User != null)
+                {
+                    userEmail = User.GetEmail();
+                }
+                UserAccess userAccess = _progenyDbContext.UserAccessDb.SingleOrDefault(u =>
+                    u.ProgenyId == picture.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess == null && picture.ProgenyId != Constants.DefaultChildId)
+                {
+                    return Unauthorized();
+                }
+
                 picture.Comments = await _context.CommentsDb.Where(c => c.CommentThreadNumber == picture.CommentThreadNumber).ToListAsync();
-                
+
                 return Ok(picture);
             }
 
@@ -288,6 +339,19 @@ namespace KinaUnaMediaApi.Controllers
             Picture result = await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureId == id);
             if (result != null)
             {
+                // Check if user should be allowed access.
+                string userEmail = Constants.DefaultUserEmail;
+                if (User != null)
+                {
+                    userEmail = User.GetEmail();
+                }
+                UserAccess userAccess = _progenyDbContext.UserAccessDb.SingleOrDefault(u =>
+                    u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess == null && result.ProgenyId != Constants.DefaultChildId)
+                {
+                    return Unauthorized();
+                }
                 return Ok(result);
             }
 
@@ -314,9 +378,23 @@ namespace KinaUnaMediaApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Picture model)
         {
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.SingleOrDefault(u =>
+                u.ProgenyId == model.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null || userAccess.AccessLevel > 0)
+            {
+                return Unauthorized();
+            }
+
             var memoryStream = await _imageStore.GetStream(model.PictureLink);
             memoryStream.Position = 0;
-            
+
             using (MagickImage image = new MagickImage(memoryStream))
             {
                 ExifProfile profile = image.GetExifProfile();
@@ -546,7 +624,7 @@ namespace KinaUnaMediaApi.Controllers
                 }
 
                 image.Strip();
-                
+
                 using (MemoryStream memStream = new MemoryStream())
                 {
                     image.Write(memStream);
@@ -576,7 +654,7 @@ namespace KinaUnaMediaApi.Controllers
 
             await _context.PicturesDb.AddAsync(model);
             await _context.SaveChangesAsync();
-            
+
             return Ok(model);
         }
 
@@ -592,6 +670,20 @@ namespace KinaUnaMediaApi.Controllers
                 return NotFound();
             }
 
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == picture.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null || userAccess.AccessLevel > 0)
+            {
+                return Unauthorized();
+            }
+
             picture.Location = value.Location;
             picture.Tags = value.Tags;
             picture.AccessLevel = value.AccessLevel;
@@ -603,7 +695,7 @@ namespace KinaUnaMediaApi.Controllers
             picture.PictureLink600 = value.PictureLink600;
             picture.PictureLink1200 = value.PictureLink1200;
             picture.PictureLink = value.PictureLink;
-            
+
             _context.PicturesDb.Update(picture);
             await _context.SaveChangesAsync();
 
@@ -617,8 +709,36 @@ namespace KinaUnaMediaApi.Controllers
             Picture picture = await _context.PicturesDb.SingleOrDefaultAsync(p => p.PictureId == id);
             if (picture != null)
             {
-                // Todo: Delete content associated with picture, i.e. comments.
+                // Check if user should be allowed access.
+                string userEmail = Constants.DefaultUserEmail;
+                if (User != null)
+                {
+                    userEmail = User.GetEmail();
+                }
+                UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                    u.ProgenyId == picture.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
+                if (userAccess == null || userAccess.AccessLevel > 0)
+                {
+                    return Unauthorized();
+                }
+
+                List<Comment> comments = _context.CommentsDb
+                    .Where(c => c.CommentThreadNumber == picture.CommentThreadNumber).ToList();
+                if (comments.Any())
+                {
+                    _context.CommentsDb.RemoveRange(comments);
+                    _context.SaveChanges();
+
+                }
+
+                CommentThread cmntThread =
+                    _context.CommentThreadsDb.SingleOrDefault(c => c.CommentThreadId == picture.CommentThreadNumber);
+                if (cmntThread != null)
+                {
+                    _context.CommentThreadsDb.Remove(cmntThread);
+                    _context.SaveChanges();
+                }
                 if (!picture.PictureLink.ToLower().StartsWith("http"))
                 {
                     await _imageStore.DeleteImage(picture.PictureLink);
@@ -641,6 +761,20 @@ namespace KinaUnaMediaApi.Controllers
         [Route("[action]/{progenyId}/{accessLevel}")]
         public async Task<IActionResult> Random(int progenyId, int accessLevel)
         {
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null && progenyId != Constants.DefaultChildId)
+            {
+                return Unauthorized();
+            }
+
             List<Picture> picturesList = await _context.PicturesDb.Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel).ToListAsync();
             if (picturesList.Any())
             {
@@ -662,7 +796,7 @@ namespace KinaUnaMediaApi.Controllers
             progeny.TimeZone = Constants.DefaultTimezone;
             Picture tempPicture = new Picture();
             tempPicture.ProgenyId = 0;
-            tempPicture.Progeny = progeny ;
+            tempPicture.Progeny = progeny;
             tempPicture.AccessLevel = 5;
             tempPicture.PictureLink600 = Constants.WebAppUrl + "/photodb/0/default_temp.jpg";
             tempPicture.ProgenyId = progeny.Id;
@@ -674,6 +808,20 @@ namespace KinaUnaMediaApi.Controllers
         [Route("[action]/{progenyId}/{accessLevel}")]
         public async Task<IActionResult> RandomMobile(int progenyId, int accessLevel)
         {
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null && progenyId != Constants.DefaultChildId)
+            {
+                return Unauthorized();
+            }
+
             List<Picture> picturesList = await _context.PicturesDb.Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel).ToListAsync();
             if (picturesList.Any())
             {
@@ -687,7 +835,7 @@ namespace KinaUnaMediaApi.Controllers
                     picture.PictureLink1200 = _imageStore.UriFor(picture.PictureLink1200);
                     picture.PictureLink600 = _imageStore.UriFor(picture.PictureLink600);
                 }
-                
+
                 return Ok(picture);
             }
 
@@ -716,6 +864,20 @@ namespace KinaUnaMediaApi.Controllers
             Picture result = await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureId == id);
             if (result != null)
             {
+                // Check if user should be allowed access.
+                string userEmail = Constants.DefaultUserEmail;
+                if (User != null)
+                {
+                    userEmail = User.GetEmail();
+                }
+                UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                    u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess == null && result.ProgenyId != Constants.DefaultChildId)
+                {
+                    return Unauthorized();
+                }
+
                 if (!result.PictureLink.ToLower().StartsWith("http"))
                 {
                     result.PictureLink = _imageStore.UriFor(result.PictureLink);
@@ -746,9 +908,22 @@ namespace KinaUnaMediaApi.Controllers
 
         [HttpGet]
         [Route("[action]")]
-        public async Task<IActionResult> PageMobile([FromQuery]int pageSize = 8, [FromQuery]int pageIndex = 1, [FromQuery] int progenyId = 2, [FromQuery] int accessLevel = 5, [FromQuery] string tagFilter = "", [FromQuery] int sortBy = 1)
-
+        public async Task<IActionResult> PageMobile([FromQuery]int pageSize = 8, [FromQuery]int pageIndex = 1, [FromQuery] int progenyId = Constants.DefaultChildId, [FromQuery] int accessLevel = 5, [FromQuery] string tagFilter = "", [FromQuery] int sortBy = 1)
         {
+            // Check if user should be allowed access.
+            string userEmail = Constants.DefaultUserEmail;
+            if (User != null)
+            {
+                userEmail = User.GetEmail();
+            }
+            UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+            if (userAccess == null && progenyId != Constants.DefaultChildId)
+            {
+                return Unauthorized();
+            }
+
             if (pageIndex < 1)
             {
                 pageIndex = 1;
@@ -834,7 +1009,7 @@ namespace KinaUnaMediaApi.Controllers
             return Ok(model);
         }
 
-        
+
         // Download pictures to StorageBlob from Url
         [HttpGet]
         [Route("[action]/{pictureId}")]
@@ -843,6 +1018,20 @@ namespace KinaUnaMediaApi.Controllers
             Picture picture = await _context.PicturesDb.SingleOrDefaultAsync(p => p.PictureId == pictureId);
             if (picture != null && picture.PictureLink.ToLower().StartsWith("http"))
             {
+                // Check if user should be allowed access.
+                string userEmail = Constants.DefaultUserEmail;
+                if (User != null)
+                {
+                    userEmail = User.GetEmail();
+                }
+                UserAccess userAccess = _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                    u.ProgenyId == picture.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess == null || userAccess.AccessLevel > 0)
+                {
+                    return Unauthorized();
+                }
+
                 using (Stream stream = GetStreamFromUrl(picture.PictureLink))
                 {
                     picture.PictureLink = await _imageStore.SaveImage(stream);
