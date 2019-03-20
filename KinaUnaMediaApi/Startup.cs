@@ -41,6 +41,9 @@ namespace KinaUnaMediaApi
                         sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                     }));
 
+            services.AddDbContext<ProgenyDbContext>(options =>
+                options.UseSqlServer(Configuration["ProgenyDefaultConnection"]));
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddAuthorization(authorizationOptions =>
