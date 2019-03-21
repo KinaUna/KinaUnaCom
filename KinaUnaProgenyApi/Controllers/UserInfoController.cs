@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
 
 namespace KinaUnaProgenyApi.Controllers
@@ -23,21 +25,20 @@ namespace KinaUnaProgenyApi.Controllers
             _context = context;
 
         }
-        // GET api/userinfo
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            List<UserInfo> resultList = await _context.UserInfoDb.AsNoTracking().ToListAsync();
-            return Ok(resultList);
-        }
 
         // GET api/userinfo/byemail/[useremail]
         [HttpGet]
         [Route("[action]/{id}")]
         public async Task<IActionResult> ByEmail(string id)
         {
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (userEmail.ToUpper() != id.ToUpper())
+            {
+                return Unauthorized();
+            }
+
             UserInfo userinfo = await _context.UserInfoDb.AsNoTracking().SingleOrDefaultAsync(u => u.UserEmail.ToUpper() == id.ToUpper());
-           
+
             if (userinfo != null)
             {
                 userinfo.CanUserAddItems = false;
@@ -75,9 +76,14 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> GetInfo(int id)
         {
             UserInfo result = await _context.UserInfoDb.AsNoTracking().SingleOrDefaultAsync(u => u.Id == id);
-            
+
             if (result != null)
             {
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                if (userEmail.ToUpper() != result.UserEmail.ToUpper())
+                {
+                    return Unauthorized();
+                }
                 result.CanUserAddItems = false;
                 result.AccessList = await _context.UserAccessDb.Where(u => u.UserId.ToUpper() == result.UserEmail.ToUpper()).ToListAsync();
                 result.ProgenyList = new List<Progeny>();
@@ -103,7 +109,7 @@ namespace KinaUnaProgenyApi.Controllers
                 result.UserId = "Unknown";
                 result.AccessList = new List<UserAccess>();
                 result.ProgenyList = new List<Progeny>();
-                
+
             }
             return Ok(result);
         }
@@ -116,6 +122,12 @@ namespace KinaUnaProgenyApi.Controllers
 
             if (result != null)
             {
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                if (userEmail.ToUpper() != result.UserEmail.ToUpper())
+                {
+                    return Unauthorized();
+                }
+
                 result.CanUserAddItems = false;
                 result.AccessList = await _context.UserAccessDb.Where(u => u.UserId.ToUpper() == result.UserEmail.ToUpper()).ToListAsync();
                 result.ProgenyList = new List<Progeny>();
@@ -161,6 +173,12 @@ namespace KinaUnaProgenyApi.Controllers
             userinfo.ProfilePicture = value?.ProfilePicture ?? "";
             userinfo.UserName = value?.UserName ?? "";
 
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (userEmail.ToUpper() != userinfo.UserEmail.ToUpper())
+            {
+                return Unauthorized();
+            }
+
             _context.UserInfoDb.Add(userinfo);
             await _context.SaveChangesAsync();
 
@@ -181,7 +199,6 @@ namespace KinaUnaProgenyApi.Controllers
             }
 
             return Ok(userinfo);
-            // return CreatedAtAction(nameof(GetInfo), new { id = userinfo.Id });
         }
 
         // PUT api/userinfo/5
@@ -193,6 +210,12 @@ namespace KinaUnaProgenyApi.Controllers
             if (userinfo == null)
             {
                 return NotFound();
+            }
+
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (userEmail.ToUpper() != userinfo.UserEmail.ToUpper())
+            {
+                return Unauthorized();
             }
 
             if (!String.IsNullOrEmpty(value.FirstName))
@@ -226,7 +249,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             userinfo.UserId = value.UserId;
             userinfo.ViewChild = value.ViewChild;
-            
+
             _context.UserInfoDb.Update(userinfo);
             await _context.SaveChangesAsync();
 
@@ -240,16 +263,18 @@ namespace KinaUnaProgenyApi.Controllers
             UserInfo userinfo = await _context.UserInfoDb.SingleOrDefaultAsync(u => u.Id == id);
             if (userinfo != null)
             {
-                
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                if (userEmail.ToUpper() != userinfo.UserEmail.ToUpper())
+                {
+                    return Unauthorized();
+                }
+
                 _context.UserInfoDb.Remove(userinfo);
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
-            else
-            {
-                return NotFound();
-            }
 
+            return NotFound();
         }
     }
 }
