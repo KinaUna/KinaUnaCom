@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,30 +25,26 @@ namespace KinaUnaProgenyApi.Controllers
             _context = context;
 
         }
-        // GET api/vocabulary
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            List<VocabularyItem> resultList = await _context.VocabularyDb.AsNoTracking().ToListAsync();
-
-            return Ok(resultList);
-        }
 
         // GET api/vocabulary/progeny/[id]
         [HttpGet]
         [Route("[action]/{id}")]
         public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
         {
-            List<VocabularyItem> wordList = await _context.VocabularyDb.AsNoTracking().Where(w => w.ProgenyId == id && w.AccessLevel >= accessLevel).ToListAsync();
-            if (wordList.Any())
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+            if (userAccess != null || id == Constants.DefaultChildId)
             {
-                return Ok(wordList);
-            }
-            else
-            {
+                List<VocabularyItem> wordList = await _context.VocabularyDb.AsNoTracking().Where(w => w.ProgenyId == id && w.AccessLevel >= accessLevel).ToListAsync();
+                if (wordList.Any())
+                {
+                    return Ok(wordList);
+                }
                 return NotFound();
             }
 
+            return Unauthorized();
         }
 
         // GET api/vocabulary/5
@@ -55,13 +53,38 @@ namespace KinaUnaProgenyApi.Controllers
         {
             VocabularyItem result = await _context.VocabularyDb.AsNoTracking().SingleOrDefaultAsync(w => w.WordId == id);
 
-            return Ok(result);
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            if (userAccess != null || id == Constants.DefaultChildId)
+            {
+                return Ok(result);
+            }
+
+            return Unauthorized();
         }
 
         // POST api/vocabulary
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] VocabularyItem value)
         {
+            // Check if child exists.
+            Progeny prog = await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == value.ProgenyId);
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (prog != null)
+            {
+                // Check if user is allowed to add words for this child.
+
+                if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                {
+                    return Unauthorized();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+
             VocabularyItem vocabularyItem = new VocabularyItem();
             vocabularyItem.AccessLevel = value.AccessLevel;
             vocabularyItem.Author = value.Author;
@@ -72,7 +95,7 @@ namespace KinaUnaProgenyApi.Controllers
             vocabularyItem.Language = value.Language;
             vocabularyItem.SoundsLike = value.SoundsLike;
             vocabularyItem.Word = value.Word;
-            
+
             _context.VocabularyDb.Add(vocabularyItem);
             await _context.SaveChangesAsync();
 
@@ -83,6 +106,22 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] VocabularyItem value)
         {
+            // Check if child exists.
+            Progeny prog = await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == value.ProgenyId);
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (prog != null)
+            {
+                // Check if user is allowed to edit words for this child.
+                if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                {
+                    return Unauthorized();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+
             VocabularyItem vocabularyItem = await _context.VocabularyDb.SingleOrDefaultAsync(w => w.WordId == id);
             if (vocabularyItem == null)
             {
@@ -112,14 +151,28 @@ namespace KinaUnaProgenyApi.Controllers
             VocabularyItem vocabularyItem = await _context.VocabularyDb.SingleOrDefaultAsync(w => w.WordId == id);
             if (vocabularyItem != null)
             {
+                // Check if child exists.
+                Progeny prog = await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == vocabularyItem.ProgenyId);
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                if (prog != null)
+                {
+                    // Check if user is allowed to delete words for this child.
+                    if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                    {
+                        return Unauthorized();
+                    }
+                }
+                else
+                {
+                    return NotFound();
+                }
+
                 _context.VocabularyDb.Remove(vocabularyItem);
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
-            else
-            {
-                return NotFound();
-            }
+
+            return NotFound();
         }
 
         [HttpGet("[action]/{id}")]
@@ -127,7 +180,21 @@ namespace KinaUnaProgenyApi.Controllers
         {
             VocabularyItem result = await _context.VocabularyDb.AsNoTracking().SingleOrDefaultAsync(w => w.WordId == id);
 
-            return Ok(result);
+            if (result != null)
+            {
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                    u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
+                {
+                    return Ok(result);
+                }
+
+                return Unauthorized();
+            }
+
+            return NotFound();
         }
     }
 }
