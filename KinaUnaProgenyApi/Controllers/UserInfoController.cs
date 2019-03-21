@@ -23,7 +23,6 @@ namespace KinaUnaProgenyApi.Controllers
         public UserInfoController(ProgenyDbContext context)
         {
             _context = context;
-
         }
 
         // GET api/userinfo/byemail/[useremail]
@@ -32,14 +31,35 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> ByEmail(string id)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            if (userEmail.ToUpper() != id.ToUpper())
+            bool allowAccess = false;
+            if (userEmail.ToUpper() == id.ToUpper())
             {
-                return Unauthorized();
+                allowAccess = true;
+            }
+            else
+            {
+                List<Progeny> progenyList = _context.ProgenyDb.Where(p => p.Admins.ToUpper().Contains(userEmail.ToUpper())).ToList();
+                if (progenyList.Any())
+                {
+                    foreach (Progeny prog in progenyList)
+                    {
+                        List<UserAccess> accessList = _context.UserAccessDb.AsNoTracking().Where(u => u.ProgenyId == prog.Id).ToList();
+                        if (accessList.Any())
+                        {
+                            foreach (UserAccess userAccess in accessList)
+                            {
+                                if (userAccess.UserId.ToUpper() == id.ToUpper())
+                                {
+                                    allowAccess = true;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             UserInfo userinfo = await _context.UserInfoDb.AsNoTracking().SingleOrDefaultAsync(u => u.UserEmail.ToUpper() == id.ToUpper());
-
-            if (userinfo != null)
+            if (allowAccess && userinfo != null)
             {
                 userinfo.CanUserAddItems = false;
                 userinfo.AccessList = await _context.UserAccessDb.Where(u => u.UserId.ToUpper() == userinfo.UserEmail.ToUpper()).ToListAsync();
@@ -76,14 +96,36 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> GetInfo(int id)
         {
             UserInfo result = await _context.UserInfoDb.AsNoTracking().SingleOrDefaultAsync(u => u.Id == id);
-
-            if (result != null)
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            bool allowAccess = false;
+            if (userEmail.ToUpper() == result.UserEmail.ToUpper())
             {
-                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                if (userEmail.ToUpper() != result.UserEmail.ToUpper())
+                allowAccess = true;
+            }
+            else
+            {
+                List<Progeny> progenyList = _context.ProgenyDb.Where(p => p.Admins.ToUpper().Contains(userEmail.ToUpper())).ToList();
+                if (progenyList.Any())
                 {
-                    return Unauthorized();
+                    foreach (Progeny prog in progenyList)
+                    {
+                        List<UserAccess> accessList = _context.UserAccessDb.AsNoTracking().Where(u => u.ProgenyId == prog.Id).ToList();
+                        if (accessList.Any())
+                        {
+                            foreach (UserAccess userAccess in accessList)
+                            {
+                                if (userAccess.UserId.ToUpper() == result.UserEmail.ToUpper())
+                                {
+                                    allowAccess = true;
+                                }
+                            }
+                        }
+                    }
                 }
+            }
+
+            if (allowAccess)
+            {
                 result.CanUserAddItems = false;
                 result.AccessList = await _context.UserAccessDb.Where(u => u.UserId.ToUpper() == result.UserEmail.ToUpper()).ToListAsync();
                 result.ProgenyList = new List<Progeny>();
@@ -120,14 +162,36 @@ namespace KinaUnaProgenyApi.Controllers
         {
             UserInfo result = await _context.UserInfoDb.AsNoTracking().SingleOrDefaultAsync(u => u.UserId == id);
 
-            if (result != null)
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            bool allowAccess = false;
+            if (userEmail.ToUpper() == result.UserEmail.ToUpper())
             {
-                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                if (userEmail.ToUpper() != result.UserEmail.ToUpper())
+                allowAccess = true;
+            }
+            else
+            {
+                List<Progeny> progenyList = _context.ProgenyDb.Where(p => p.Admins.ToUpper().Contains(userEmail.ToUpper())).ToList();
+                if (progenyList.Any())
                 {
-                    return Unauthorized();
+                    foreach (Progeny prog in progenyList)
+                    {
+                        List<UserAccess> accessList = _context.UserAccessDb.AsNoTracking().Where(u => u.ProgenyId == prog.Id).ToList();
+                        if (accessList.Any())
+                        {
+                            foreach (UserAccess userAccess in accessList)
+                            {
+                                if (userAccess.UserId.ToUpper() == result.UserEmail.ToUpper())
+                                {
+                                    allowAccess = true;
+                                }
+                            }
+                        }
+                    }
                 }
+            }
 
+            if (allowAccess)
+            {
                 result.CanUserAddItems = false;
                 result.AccessList = await _context.UserAccessDb.Where(u => u.UserId.ToUpper() == result.UserEmail.ToUpper()).ToListAsync();
                 result.ProgenyList = new List<Progeny>();
