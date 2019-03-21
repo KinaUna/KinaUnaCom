@@ -2059,7 +2059,7 @@ namespace KinaUnaWeb.Controllers
 
                         model.ProgenyList.Add(selItem);
 
-                        var friendsList1 = _context.FriendsDb.Where(f => f.ProgenyId == prog.Id).ToList();
+                        var friendsList1 = await _progenyHttpClient.GetFriendsList(prog.Id, 0); // _context.FriendsDb.Where(f => f.ProgenyId == prog.Id).ToList();
                         foreach (Friend frn in friendsList1)
                         {
                             if (!String.IsNullOrEmpty(frn.Tags))
@@ -2140,27 +2140,10 @@ namespace KinaUnaWeb.Controllers
                 friendItem.PictureLink = Constants.ProfilePictureUrl;
             }
 
-            await _context.FriendsDb.AddAsync(friendItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.AddFriend(friendItem);
+            // await _context.FriendsDb.AddAsync(friendItem);
+            // await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = friendItem.ProgenyId;
-            tItem.AccessLevel = friendItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Friend;
-            tItem.ItemId = friendItem.FriendId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            if (friendItem.FriendSince != null)
-            {
-                tItem.ProgenyTime = friendItem.FriendSince.Value;
-            }
-            else
-            {
-                tItem.ProgenyTime = DateTime.UtcNow;
-            }
-
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -2213,7 +2196,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> EditFriend(int itemId)
         {
             FriendViewModel model = new FriendViewModel();
-            Friend friend = await _context.FriendsDb.SingleAsync(f => f.FriendId == itemId);
+            Friend friend = await _progenyHttpClient.GetFriend(itemId); // _context.FriendsDb.SingleAsync(f => f.FriendId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -2252,7 +2235,7 @@ namespace KinaUnaWeb.Controllers
             model.Tags = friend.Tags;
 
             List<string> tagsList = new List<string>();
-            var friendsList1 = _context.FriendsDb.Where(f => f.ProgenyId == model.ProgenyId).ToList();
+            var friendsList1 = await _progenyHttpClient.GetFriendsList(model.ProgenyId, 0); // _context.FriendsDb.Where(f => f.ProgenyId == model.ProgenyId).ToList();
             foreach (Friend frn in friendsList1)
             {
                 if (!String.IsNullOrEmpty(frn.Tags))
@@ -2300,7 +2283,7 @@ namespace KinaUnaWeb.Controllers
             }
             if (ModelState.IsValid)
             {
-                Friend model = await _context.FriendsDb.SingleOrDefaultAsync(f => f.FriendId == friend.FriendId);
+                Friend model = await _progenyHttpClient.GetFriend(friend.FriendId); // _context.FriendsDb.SingleOrDefaultAsync(f => f.FriendId == friend.FriendId);
                 model.AccessLevel = friend.AccessLevel;
                 model.Author = friend.Author;
                 model.Description = friend.Description;
@@ -2333,19 +2316,9 @@ namespace KinaUnaWeb.Controllers
                     }
                 }
 
-                _context.FriendsDb.Update(model);
-                await _context.SaveChangesAsync();
-
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.FriendId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Friend);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.FriendSince.Value;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
-
+                await _progenyHttpClient.UpdateFriend(model);
+                //_context.FriendsDb.Update(model);
+                //await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index", "Friends");
         }
@@ -2353,7 +2326,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteFriend(int itemId)
         {
-            Friend model = await _context.FriendsDb.SingleAsync(f => f.FriendId == itemId);
+            Friend model = await _progenyHttpClient.GetFriend(itemId); // _context.FriendsDb.SingleAsync(f => f.FriendId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -2370,7 +2343,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteFriend(Friend model)
         {
-            Friend friend = await _context.FriendsDb.SingleAsync(f => f.FriendId == model.FriendId);
+            Friend friend = await _progenyHttpClient.GetFriend(model.FriendId); //_context.FriendsDb.SingleAsync(f => f.FriendId == model.FriendId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -2381,21 +2354,9 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.FriendId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Friend);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
-
-            _context.FriendsDb.Remove(friend);
-            await _context.SaveChangesAsync();
-            if (!friend.PictureLink.ToLower().StartsWith("http"))
-            {
-                await _imageStore.DeleteImage(friend.PictureLink, "friends");
-            }
-
+            await _progenyHttpClient.DeleteFriend(model.FriendId);
+            //_context.FriendsDb.Remove(friend);
+            //await _context.SaveChangesAsync();
 
             return RedirectToAction("Index", "Friends");
         }

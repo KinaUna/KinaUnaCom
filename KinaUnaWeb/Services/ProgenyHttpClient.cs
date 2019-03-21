@@ -1107,5 +1107,160 @@ namespace KinaUnaWeb.Services
             string returnString = await updateAddressResponseString.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<Address>(returnString);
         }
+
+        public async Task<Friend> GetFriend(int friendId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Friend friendItem = new Friend();
+            string friendsApiPath = "/api/friends/" + friendId;
+            var friendsUri = clientUri + friendsApiPath;
+            var friendResponse = await httpClient.GetAsync(friendsUri).ConfigureAwait(false);
+            if (friendResponse.IsSuccessStatusCode)
+            {
+                var friendAsString = await friendResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                friendItem = JsonConvert.DeserializeObject<Friend>(friendAsString);
+            }
+
+            return friendItem;
+        }
+
+        public async Task<Friend> AddFriend(Friend friend)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string friendsApiPath = "/api/friends/";
+            var friendsUri = clientUri + friendsApiPath;
+            await httpClient.PostAsync(friendsUri, new StringContent(JsonConvert.SerializeObject(friend), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return friend;
+        }
+
+        public async Task<Friend> UpdateFriend(Friend friend)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateFriendApiPath = "/api/friends/" + friend.FriendId;
+            var updateFriendUri = clientUri + updateFriendApiPath;
+            var updateFriendResponseString = await updateHttpClient.PutAsync(updateFriendUri, friend, new JsonMediaTypeFormatter());
+            string returnString = await updateFriendResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Friend>(returnString);
+        }
+
+        public async Task<bool> DeleteFriend(int friendId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string friendsApiPath = "/api/friends/" + friendId;
+            var friendsUri = clientUri + friendsApiPath;
+            await httpClient.DeleteAsync(friendsUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Friend>> GetFriendsList(int progenyId, int accessLevel)
+        {
+            List<Friend> progenyFriendsList = new List<Friend>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string friendsApiPath = "/api/friends/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var friendsUri = clientUri + friendsApiPath;
+            var friendsResponse = await httpClient.GetAsync(friendsUri).ConfigureAwait(false);
+            if (friendsResponse.IsSuccessStatusCode)
+            {
+                var friendsAsString = await friendsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyFriendsList = JsonConvert.DeserializeObject<List<Friend>>(friendsAsString);
+            }
+
+            return progenyFriendsList;
+        }
     }
 }

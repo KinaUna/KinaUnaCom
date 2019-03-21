@@ -42,5 +42,10 @@ namespace KinaUnaWeb.Services
         Task<Address> GetAddress(int addressId);
         Task<Address> AddAddress(Address address);
         Task<Address> UpdateAddress(Address address);
+        Task<Friend> GetFriend(int friendId);
+        Task<Friend> AddFriend(Friend friend);
+        Task<Friend> UpdateFriend(Friend friend);
+        Task<bool> DeleteFriend(int friendId);
+        Task<List<Friend>> GetFriendsList(int progenyId, int accessLevel);
     }
 }
