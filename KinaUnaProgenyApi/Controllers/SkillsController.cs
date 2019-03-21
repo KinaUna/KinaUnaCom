@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,30 +25,26 @@ namespace KinaUnaProgenyApi.Controllers
             _context = context;
 
         }
-        // GET api/skills
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            List<Skill> resultList = await _context.SkillsDb.AsNoTracking().ToListAsync();
-
-            return Ok(resultList);
-        }
 
         // GET api/skills/progeny/[id]
         [HttpGet]
         [Route("[action]/{id}")]
         public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
         {
-            List<Skill> skillsList = await _context.SkillsDb.AsNoTracking().Where(s => s.ProgenyId == id && s.AccessLevel >= accessLevel).ToListAsync();
-            if (skillsList.Any())
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+            if (userAccess != null || id == Constants.DefaultChildId)
             {
-                return Ok(skillsList);
-            }
-            else
-            {
+                List<Skill> skillsList = await _context.SkillsDb.AsNoTracking().Where(s => s.ProgenyId == id && s.AccessLevel >= accessLevel).ToListAsync();
+                if (skillsList.Any())
+                {
+                    return Ok(skillsList);
+                }
                 return NotFound();
             }
 
+            return Unauthorized();
         }
 
         // GET api/skills/5
@@ -55,13 +53,38 @@ namespace KinaUnaProgenyApi.Controllers
         {
             Skill result = await _context.SkillsDb.AsNoTracking().SingleOrDefaultAsync(s => s.SkillId == id);
 
-            return Ok(result);
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            if (userAccess != null || id == Constants.DefaultChildId)
+            {
+                return Ok(result);
+            }
+
+            return Unauthorized();
         }
 
         // POST api/vocabulary
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Skill value)
         {
+            // Check if child exists.
+            Progeny prog = await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == value.ProgenyId);
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (prog != null)
+            {
+                // Check if user is allowed to add skills for this child.
+
+                if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                {
+                    return Unauthorized();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+
             Skill skillItem = new Skill();
             skillItem.AccessLevel = value.AccessLevel;
             skillItem.Author = value.Author;
@@ -71,7 +94,7 @@ namespace KinaUnaProgenyApi.Controllers
             skillItem.Description = value.Description;
             skillItem.SkillAddedDate = DateTime.UtcNow;
             skillItem.SkillFirstObservation = value.SkillFirstObservation;
-            
+
             _context.SkillsDb.Add(skillItem);
             await _context.SaveChangesAsync();
 
@@ -84,6 +107,22 @@ namespace KinaUnaProgenyApi.Controllers
         {
             Skill skillItem = await _context.SkillsDb.SingleOrDefaultAsync(s => s.SkillId == id);
             if (skillItem == null)
+            {
+                return NotFound();
+            }
+
+            // Check if child exists.
+            Progeny prog = await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == value.ProgenyId);
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (prog != null)
+            {
+                // Check if user is allowed to edit skills for this child.
+                if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                {
+                    return Unauthorized();
+                }
+            }
+            else
             {
                 return NotFound();
             }
@@ -110,6 +149,21 @@ namespace KinaUnaProgenyApi.Controllers
             Skill skillItem = await _context.SkillsDb.SingleOrDefaultAsync(s => s.SkillId == id);
             if (skillItem != null)
             {
+                // Check if child exists.
+                Progeny prog = await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == skillItem.ProgenyId);
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                if (prog != null)
+                {
+                    // Check if user is allowed to delete skills for this child.
+                    if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                    {
+                        return Unauthorized();
+                    }
+                }
+                else
+                {
+                    return NotFound();
+                }
                 _context.SkillsDb.Remove(skillItem);
                 await _context.SaveChangesAsync();
                 return NoContent();
@@ -125,7 +179,21 @@ namespace KinaUnaProgenyApi.Controllers
         {
             Skill result = await _context.SkillsDb.AsNoTracking().SingleOrDefaultAsync(s => s.SkillId == id);
 
-            return Ok(result);
+            if (result != null)
+            {
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+                UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                    u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+
+                if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
+                {
+                    return Ok(result);
+                }
+
+                return Unauthorized();
+            }
+
+            return NotFound();
         }
     }
 }
