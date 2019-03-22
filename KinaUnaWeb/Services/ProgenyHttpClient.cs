@@ -2262,5 +2262,40 @@ namespace KinaUnaWeb.Services
 
             return progenyWordsList;
         }
+
+        public async Task<List<TimeLineItem>> GetTimeline(int progenyId, int accessLevel)
+        {
+            List<TimeLineItem> progenyTimeline = new List<TimeLineItem>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string timelineApiPath = "/api/timeline/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var timelineUri = clientUri + timelineApiPath;
+            var timelineResponse = await httpClient.GetAsync(timelineUri).ConfigureAwait(false);
+            if (timelineResponse.IsSuccessStatusCode)
+            {
+                var timelineAsString = await timelineResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyTimeline = JsonConvert.DeserializeObject<List<TimeLineItem>>(timelineAsString);
+            }
+
+            return progenyTimeline;
+        }
     }
 }

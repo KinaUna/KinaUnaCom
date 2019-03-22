@@ -36,7 +36,7 @@ namespace KinaUnaProgenyApi.Controllers
                 u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
             if (userAccess != null || id == Constants.DefaultChildId)
             {
-                List<TimeLineItem> timeLineList = await _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == id && t.AccessLevel >= accessLevel).ToListAsync();
+                List<TimeLineItem> timeLineList = await _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == id && t.AccessLevel >= accessLevel && t.ProgenyTime < DateTime.UtcNow).ToListAsync();
                 if (timeLineList.Any())
                 {
                     return Ok(timeLineList);
