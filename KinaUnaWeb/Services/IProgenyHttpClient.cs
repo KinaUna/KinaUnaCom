@@ -57,5 +57,10 @@ namespace KinaUnaWeb.Services
         Task<Measurement> UpdateMeasurement(Measurement measurement);
         Task<bool> DeleteMeasurement(int measurementId);
         Task<List<Measurement>> GetMeasurementsList(int progenyId, int accessLevel);
+        Task<Note> GetNote(int noteId);
+        Task<Note> AddNote(Note note);
+        Task<Note> UpdateNote(Note note);
+        Task<bool> DeleteNote(int noteId);
+        Task<List<Note>> GetNotesList(int progenyId, int accessLevel);
     }
 }

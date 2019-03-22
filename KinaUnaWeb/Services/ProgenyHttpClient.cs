@@ -1572,5 +1572,160 @@ namespace KinaUnaWeb.Services
 
             return progenyMeasurementsList;
         }
+
+        public async Task<Note> GetNote(int noteId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Note noteItem = new Note();
+            string notesApiPath = "/api/notes/" + noteId;
+            var noteUri = clientUri + notesApiPath;
+            var noteResponse = await httpClient.GetAsync(noteUri).ConfigureAwait(false);
+            if (noteResponse.IsSuccessStatusCode)
+            {
+                var noteAsString = await noteResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                noteItem = JsonConvert.DeserializeObject<Note>(noteAsString);
+            }
+
+            return noteItem;
+        }
+
+        public async Task<Note> AddNote(Note note)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string notesApiPath = "/api/notes/";
+            var noteUri = clientUri + notesApiPath;
+            await httpClient.PostAsync(noteUri, new StringContent(JsonConvert.SerializeObject(note), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return note;
+        }
+
+        public async Task<Note> UpdateNote(Note note)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateApiPath = "/api/notes/" + note.NoteId;
+            var updateUri = clientUri + updateApiPath;
+            var updateResponseString = await updateHttpClient.PutAsync(updateUri, note, new JsonMediaTypeFormatter());
+            string returnString = await updateResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Note>(returnString);
+        }
+
+        public async Task<bool> DeleteNote(int noteId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string notesApiPath = "/api/notes/" + noteId;
+            var noteUri = clientUri + notesApiPath;
+            await httpClient.DeleteAsync(noteUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Note>> GetNotesList(int progenyId, int accessLevel)
+        {
+            List<Note> progenyNotesList = new List<Note>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string notesApiPath = "/api/notes/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var notesUri = clientUri + notesApiPath;
+            var notesResponse = await httpClient.GetAsync(notesUri).ConfigureAwait(false);
+            if (notesResponse.IsSuccessStatusCode)
+            {
+                var notesAsString = await notesResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyNotesList = JsonConvert.DeserializeObject<List<Note>>(notesAsString);
+            }
+
+            return progenyNotesList;
+        }
     }
 }

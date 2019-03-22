@@ -26,7 +26,6 @@ namespace KinaUnaProgenyApi.Controllers
 
         }
 
-
         // GET api/notes/progeny/[id]
         [HttpGet]
         [Route("[action]/{id}")]
@@ -46,7 +45,6 @@ namespace KinaUnaProgenyApi.Controllers
             }
 
             return Unauthorized();
-
         }
 
         // GET api/notes/5
@@ -99,6 +97,19 @@ namespace KinaUnaProgenyApi.Controllers
             _context.NotesDb.Add(noteItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = noteItem.ProgenyId;
+            tItem.AccessLevel = noteItem.AccessLevel;
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Note;
+            tItem.ItemId = noteItem.NoteId.ToString();
+            UserInfo userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+            tItem.CreatedBy = userinfo.UserId;
+            tItem.CreatedTime = noteItem.CreatedDate;
+            tItem.ProgenyTime = noteItem.CreatedDate;
+
+            await _context.TimeLineDb.AddAsync(tItem);
+            await _context.SaveChangesAsync();
+
             return Ok(noteItem);
         }
 
@@ -139,6 +150,16 @@ namespace KinaUnaProgenyApi.Controllers
             _context.NotesDb.Update(noteItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == noteItem.NoteId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Note);
+            if (tItem != null)
+            {
+                tItem.ProgenyTime = noteItem.CreatedDate;
+                tItem.AccessLevel = noteItem.AccessLevel;
+                _context.TimeLineDb.Update(tItem);
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(noteItem);
         }
 
@@ -163,6 +184,14 @@ namespace KinaUnaProgenyApi.Controllers
                 else
                 {
                     return NotFound();
+                }
+
+                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                    t.ItemId == noteItem.NoteId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Note);
+                if (tItem != null)
+                {
+                    _context.TimeLineDb.Remove(tItem);
+                    await _context.SaveChangesAsync();
                 }
 
                 _context.NotesDb.Remove(noteItem);

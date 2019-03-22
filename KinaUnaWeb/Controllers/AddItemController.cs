@@ -1038,7 +1038,7 @@ namespace KinaUnaWeb.Controllers
             var progAdminList = await _progenyHttpClient.GetProgenyAdminList(userEmail);
             if (!progAdminList.Any())
             {
-                // Todo: Show that no children are available to add info to.
+                // Todo: Show that no children are available to add note for.
                 return RedirectToAction("Index");
             }
 
@@ -1050,20 +1050,10 @@ namespace KinaUnaWeb.Controllers
             noteItem.Category = model.Category;
             noteItem.AccessLevel = model.AccessLevel;
             noteItem.Owner = userinfo.UserId;
-            await _context.NotesDb.AddAsync(noteItem);
-            await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = noteItem.ProgenyId;
-            tItem.AccessLevel = noteItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Note;
-            tItem.ItemId = noteItem.NoteId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = noteItem.CreatedDate;
-            tItem.ProgenyTime = noteItem.CreatedDate;
-
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.AddNote(noteItem);
+            //await _context.NotesDb.AddAsync(noteItem);
+            //await _context.SaveChangesAsync();
 
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
@@ -1118,7 +1108,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> EditNote(int itemId)
         {
             NoteViewModel model = new NoteViewModel();
-            Note note = await _context.NotesDb.SingleAsync(n => n.NoteId == itemId);
+            Note note = await _progenyHttpClient.GetNote(itemId); // _context.NotesDb.SingleAsync(n => n.NoteId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1174,18 +1164,10 @@ namespace KinaUnaWeb.Controllers
                 model.CreatedDate = TimeZoneInfo.ConvertTimeToUtc(note.CreatedDate, TimeZoneInfo.FindSystemTimeZoneById(userinfo.Timezone));
                 model.Content = note.Content;
                 model.Owner = note.Owner;
-                _context.NotesDb.Update(model);
-                await _context.SaveChangesAsync();
 
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.NoteId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Note);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.CreatedDate;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
+                await _progenyHttpClient.UpdateNote(model);
+                //_context.NotesDb.Update(model);
+                //await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index", "Notes");
         }
@@ -1193,7 +1175,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteNote(int itemId)
         {
-            Note model = await _context.NotesDb.SingleAsync(n => n.NoteId == itemId);
+            Note model = await _progenyHttpClient.GetNote(itemId); // _context.NotesDb.SingleAsync(n => n.NoteId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1210,7 +1192,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteNote(Note model)
         {
-            Note note = await _context.NotesDb.SingleAsync(n => n.NoteId == model.NoteId);
+            Note note = await _progenyHttpClient.GetNote(model.NoteId); // _context.NotesDb.SingleAsync(n => n.NoteId == model.NoteId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1221,16 +1203,9 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.NoteId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Note);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
-
-            _context.NotesDb.Remove(note);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.DeleteNote(model.NoteId);
+            //_context.NotesDb.Remove(note);
+            //await _context.SaveChangesAsync();
             return RedirectToAction("Index", "Notes");
         }
 
