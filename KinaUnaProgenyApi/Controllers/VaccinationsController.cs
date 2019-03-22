@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
@@ -97,6 +98,19 @@ namespace KinaUnaProgenyApi.Controllers
             _context.VaccinationsDb.Add(vaccinationItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = vaccinationItem.ProgenyId;
+            tItem.AccessLevel = vaccinationItem.AccessLevel;
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Vaccination;
+            tItem.ItemId = vaccinationItem.VaccinationId.ToString();
+            UserInfo userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+            tItem.CreatedBy = userinfo.UserId;
+            tItem.CreatedTime = DateTime.UtcNow;
+            tItem.ProgenyTime = vaccinationItem.VaccinationDate;
+
+            await _context.TimeLineDb.AddAsync(tItem);
+            await _context.SaveChangesAsync();
+
             return Ok(vaccinationItem);
         }
 
@@ -137,6 +151,16 @@ namespace KinaUnaProgenyApi.Controllers
             _context.VaccinationsDb.Update(vaccinationItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == vaccinationItem.VaccinationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vaccination);
+            if (tItem != null)
+            {
+                tItem.ProgenyTime = vaccinationItem.VaccinationDate;
+                tItem.AccessLevel = vaccinationItem.AccessLevel;
+                _context.TimeLineDb.Update(tItem);
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(vaccinationItem);
         }
 
@@ -161,6 +185,14 @@ namespace KinaUnaProgenyApi.Controllers
                 else
                 {
                     return NotFound();
+                }
+
+                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                    t.ItemId == vaccinationItem.VaccinationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vaccination);
+                if (tItem != null)
+                {
+                    _context.TimeLineDb.Remove(tItem);
+                    await _context.SaveChangesAsync();
                 }
 
                 _context.VaccinationsDb.Remove(vaccinationItem);

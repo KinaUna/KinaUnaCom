@@ -67,5 +67,10 @@ namespace KinaUnaWeb.Services
         Task<Skill> UpdateSkill(Skill skill);
         Task<bool> DeleteSkill(int skillId);
         Task<List<Skill>> GetSkillsList(int progenyId, int accessLevel);
+        Task<Vaccination> GetVaccination(int vaccinationId);
+        Task<Vaccination> AddVaccination(Vaccination vaccination);
+        Task<Vaccination> UpdateVaccination(Vaccination vaccination);
+        Task<bool> DeleteVaccination(int vaccinationId);
+        Task<List<Vaccination>> GetVaccinationsList(int progenyId, int accessLevel);
     }
 }

@@ -2999,20 +2999,10 @@ namespace KinaUnaWeb.Controllers
             vacItem.AccessLevel = model.AccessLevel;
             vacItem.Author = userinfo.UserId;
 
-            await _context.VaccinationsDb.AddAsync(vacItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.AddVaccination(vacItem);
+            //await _context.VaccinationsDb.AddAsync(vacItem);
+            //await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = vacItem.ProgenyId;
-            tItem.AccessLevel = vacItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Vaccination;
-            tItem.ItemId = vacItem.VaccinationId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            tItem.ProgenyTime = vacItem.VaccinationDate;
-
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -3065,7 +3055,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> EditVaccination(int itemId)
         {
             VaccinationViewModel model = new VaccinationViewModel();
-            Vaccination vaccination = await _context.VaccinationsDb.SingleAsync(v => v.VaccinationId == itemId);
+            Vaccination vaccination = await _progenyHttpClient.GetVaccination(itemId); // _context.VaccinationsDb.SingleAsync(v => v.VaccinationId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3113,18 +3103,10 @@ namespace KinaUnaWeb.Controllers
                 model.VaccinationDate = vaccination.VaccinationDate;
                 model.VaccinationDescription = vaccination.VaccinationDescription;
                 model.Notes = vaccination.Notes;
-                _context.VaccinationsDb.Update(model);
-                await _context.SaveChangesAsync();
 
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.VaccinationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vaccination);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.VaccinationDate;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
+                await _progenyHttpClient.UpdateVaccination(model);
+                //_context.VaccinationsDb.Update(model);
+                //await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index", "Vaccinations");
         }
@@ -3132,7 +3114,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteVaccination(int itemId)
         {
-            Vaccination model = await _context.VaccinationsDb.SingleAsync(v => v.VaccinationId == itemId);
+            Vaccination model = await _progenyHttpClient.GetVaccination(itemId); // _context.VaccinationsDb.SingleAsync(v => v.VaccinationId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3149,7 +3131,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteVaccination(Vaccination model)
         {
-            Vaccination vaccination = await _context.VaccinationsDb.SingleAsync(v => v.VaccinationId == model.VaccinationId);
+            Vaccination vaccination = await _progenyHttpClient.GetVaccination(model.VaccinationId); // _context.VaccinationsDb.SingleAsync(v => v.VaccinationId == model.VaccinationId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3160,16 +3142,9 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.VaccinationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vaccination);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
-
-            _context.VaccinationsDb.Remove(vaccination);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.DeleteVaccination(vaccination.VaccinationId);
+            //_context.VaccinationsDb.Remove(vaccination);
+            //await _context.SaveChangesAsync();
             return RedirectToAction("Index", "Vaccinations");
         }
 

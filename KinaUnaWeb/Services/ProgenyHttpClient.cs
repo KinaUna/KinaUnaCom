@@ -1882,5 +1882,160 @@ namespace KinaUnaWeb.Services
 
             return progenySkillsList;
         }
+
+        public async Task<Vaccination> GetVaccination(int vaccinationId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Vaccination vaccinationItem = new Vaccination();
+            string vaccinationsApiPath = "/api/vaccinations/" + vaccinationId;
+            var vaccinationUri = clientUri + vaccinationsApiPath;
+            var vaccinationResponse = await httpClient.GetAsync(vaccinationUri).ConfigureAwait(false);
+            if (vaccinationResponse.IsSuccessStatusCode)
+            {
+                var vaccinationAsString = await vaccinationResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                vaccinationItem = JsonConvert.DeserializeObject<Vaccination>(vaccinationAsString);
+            }
+
+            return vaccinationItem;
+        }
+
+        public async Task<Vaccination> AddVaccination(Vaccination vaccination)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string vaccinationsApiPath = "/api/vaccinations/";
+            var vaccinationUri = clientUri + vaccinationsApiPath;
+            await httpClient.PostAsync(vaccinationUri, new StringContent(JsonConvert.SerializeObject(vaccination), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return vaccination;
+        }
+
+        public async Task<Vaccination> UpdateVaccination(Vaccination vaccination)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateVaccinationsApiPath = "/api/vaccinations/" + vaccination.VaccinationId;
+            var updateVaccinationUri = clientUri + updateVaccinationsApiPath;
+            var updateVaccinationResponseString = await updateHttpClient.PutAsync(updateVaccinationUri, vaccination, new JsonMediaTypeFormatter());
+            string returnString = await updateVaccinationResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Vaccination>(returnString);
+        }
+
+        public async Task<bool> DeleteVaccination(int vaccinationId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string vaccinationsApiPath = "/api/vaccinations/" + vaccinationId;
+            var vaccinationUri = clientUri + vaccinationsApiPath;
+            await httpClient.DeleteAsync(vaccinationUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Vaccination>> GetVaccinationsList(int progenyId, int accessLevel)
+        {
+            List<Vaccination> progenyVaccinationsList = new List<Vaccination>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string vaccinationsApiPath = "/api/vaccinations/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var vaccinationsUri = clientUri + vaccinationsApiPath;
+            var vaccinationsResponse = await httpClient.GetAsync(vaccinationsUri).ConfigureAwait(false);
+            if (vaccinationsResponse.IsSuccessStatusCode)
+            {
+                var vaccinationsAsString = await vaccinationsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyVaccinationsList = JsonConvert.DeserializeObject<List<Vaccination>>(vaccinationsAsString);
+            }
+
+            return progenyVaccinationsList;
+        }
     }
 }
