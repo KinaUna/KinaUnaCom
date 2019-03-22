@@ -62,5 +62,10 @@ namespace KinaUnaWeb.Services
         Task<Note> UpdateNote(Note note);
         Task<bool> DeleteNote(int noteId);
         Task<List<Note>> GetNotesList(int progenyId, int accessLevel);
+        Task<Skill> GetSkill(int skillId);
+        Task<Skill> AddSkill(Skill skill);
+        Task<Skill> UpdateSkill(Skill skill);
+        Task<bool> DeleteSkill(int skillId);
+        Task<List<Skill>> GetSkillsList(int progenyId, int accessLevel);
     }
 }

@@ -1727,5 +1727,160 @@ namespace KinaUnaWeb.Services
 
             return progenyNotesList;
         }
+
+        public async Task<Skill> GetSkill(int skillId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Skill skillItem = new Skill();
+            string skillsApiPath = "/api/skills/" + skillId;
+            var skillUri = clientUri + skillsApiPath;
+            var skillResponse = await httpClient.GetAsync(skillUri).ConfigureAwait(false);
+            if (skillResponse.IsSuccessStatusCode)
+            {
+                var skillAsString = await skillResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                skillItem = JsonConvert.DeserializeObject<Skill>(skillAsString);
+            }
+
+            return skillItem;
+        }
+
+        public async Task<Skill> AddSkill(Skill skill)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string skillsApiPath = "/api/skills/";
+            var skillUri = clientUri + skillsApiPath;
+            await httpClient.PostAsync(skillUri, new StringContent(JsonConvert.SerializeObject(skill), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return skill;
+        }
+
+        public async Task<Skill> UpdateSkill(Skill skill)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateSkillsApiPath = "/api/skills/" + skill.SkillId;
+            var updateSkillUri = clientUri + updateSkillsApiPath;
+            var updateSkillResponseString = await updateHttpClient.PutAsync(updateSkillUri, skill, new JsonMediaTypeFormatter());
+            string returnString = await updateSkillResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Skill>(returnString);
+        }
+
+        public async Task<bool> DeleteSkill(int skillId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string skillsApiPath = "/api/skills/" + skillId;
+            var skillUri = clientUri + skillsApiPath;
+            await httpClient.DeleteAsync(skillUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Skill>> GetSkillsList(int progenyId, int accessLevel)
+        {
+            List<Skill> progenySkillsList = new List<Skill>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string skillsApiPath = "/api/skills/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var skillsUri = clientUri + skillsApiPath;
+            var skillsResponse = await httpClient.GetAsync(skillsUri).ConfigureAwait(false);
+            if (skillsResponse.IsSuccessStatusCode)
+            {
+                var skillsAsString = await skillsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenySkillsList = JsonConvert.DeserializeObject<List<Skill>>(skillsAsString);
+            }
+
+            return progenySkillsList;
+        }
     }
 }

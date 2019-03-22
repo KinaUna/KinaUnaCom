@@ -1809,20 +1809,11 @@ namespace KinaUnaWeb.Controllers
             skillItem.SkillFirstObservation = model.SkillFirstObservation;
             skillItem.AccessLevel = model.AccessLevel;
             skillItem.Author = userinfo.UserId;
-            await _context.SkillsDb.AddAsync(skillItem);
-            await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = skillItem.ProgenyId;
-            tItem.AccessLevel = skillItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Skill;
-            tItem.ItemId = skillItem.SkillId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            tItem.ProgenyTime = skillItem.SkillFirstObservation.Value;
+            await _progenyHttpClient.AddSkill(skillItem);
+            //await _context.SkillsDb.AddAsync(skillItem);
+            //await _context.SaveChangesAsync();
 
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -1877,7 +1868,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> EditSkill(int itemId)
         {
             SkillViewModel model = new SkillViewModel();
-            Skill skill = await _context.SkillsDb.SingleAsync(s => s.SkillId == itemId);
+            Skill skill = await _progenyHttpClient.GetSkill(itemId); // _context.SkillsDb.SingleAsync(s => s.SkillId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1937,18 +1928,10 @@ namespace KinaUnaWeb.Controllers
                 }
                 model.SkillFirstObservation = skill.SkillFirstObservation;
                 model.SkillId = skill.SkillId;
-                _context.SkillsDb.Update(model);
-                await _context.SaveChangesAsync();
 
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.SkillId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Skill);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.SkillFirstObservation.Value;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
+                await _progenyHttpClient.UpdateSkill(model);
+                //_context.SkillsDb.Update(model);
+                //await _context.SaveChangesAsync();
             }
 
             return RedirectToAction("Index", "Skills");
@@ -1957,7 +1940,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteSkill(int itemId)
         {
-            Skill model = await _context.SkillsDb.SingleAsync(s => s.SkillId == itemId);
+            Skill model = await _progenyHttpClient.GetSkill(itemId); // _context.SkillsDb.SingleAsync(s => s.SkillId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1974,7 +1957,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteSkill(Skill model)
         {
-            Skill skill = await _context.SkillsDb.SingleAsync(s => s.SkillId == model.SkillId);
+            Skill skill = await _progenyHttpClient.GetSkill(model.SkillId); // _context.SkillsDb.SingleAsync(s => s.SkillId == model.SkillId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1985,16 +1968,10 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.SkillId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Skill);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
+            await _progenyHttpClient.DeleteSkill(skill.SkillId);
+            //_context.SkillsDb.Remove(skill);
+            //await _context.SaveChangesAsync();
 
-            _context.SkillsDb.Remove(skill);
-            await _context.SaveChangesAsync();
             return RedirectToAction("Index", "Skills");
         }
 

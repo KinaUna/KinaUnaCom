@@ -98,6 +98,19 @@ namespace KinaUnaProgenyApi.Controllers
             _context.SkillsDb.Add(skillItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = skillItem.ProgenyId;
+            tItem.AccessLevel = skillItem.AccessLevel;
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Skill;
+            tItem.ItemId = skillItem.SkillId.ToString();
+            UserInfo userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+            tItem.CreatedBy = userinfo.UserId;
+            tItem.CreatedTime = DateTime.UtcNow;
+            tItem.ProgenyTime = skillItem.SkillFirstObservation.Value;
+
+            await _context.TimeLineDb.AddAsync(tItem);
+            await _context.SaveChangesAsync();
+
             return Ok(skillItem);
         }
 
@@ -139,6 +152,18 @@ namespace KinaUnaProgenyApi.Controllers
             _context.SkillsDb.Update(skillItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == skillItem.SkillId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Skill);
+            if (tItem != null)
+            {
+                if (skillItem.SkillFirstObservation != null)
+                {
+                    tItem.ProgenyTime = skillItem.SkillFirstObservation.Value;
+                }
+                tItem.AccessLevel = skillItem.AccessLevel;
+                _context.TimeLineDb.Update(tItem);
+                await _context.SaveChangesAsync();
+            }
             return Ok(skillItem);
         }
 
@@ -164,6 +189,15 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     return NotFound();
                 }
+
+                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                    t.ItemId == skillItem.SkillId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Skill);
+                if (tItem != null)
+                {
+                    _context.TimeLineDb.Remove(tItem);
+                    await _context.SaveChangesAsync();
+                }
+
                 _context.SkillsDb.Remove(skillItem);
                 await _context.SaveChangesAsync();
                 return NoContent();
