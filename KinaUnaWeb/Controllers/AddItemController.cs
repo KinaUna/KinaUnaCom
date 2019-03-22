@@ -1533,27 +1533,11 @@ namespace KinaUnaWeb.Controllers
             vocabItem.SoundsLike = model.SoundsLike;
             vocabItem.AccessLevel = model.AccessLevel;
             vocabItem.Author = userinfo.UserId;
-            await _context.VocabularyDb.AddAsync(vocabItem);
-            await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = vocabItem.ProgenyId;
-            tItem.AccessLevel = vocabItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Vocabulary;
-            tItem.ItemId = vocabItem.WordId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            if (vocabItem.Date != null)
-            {
-                tItem.ProgenyTime = vocabItem.Date.Value;
-            }
-            else
-            {
-                tItem.ProgenyTime = DateTime.UtcNow;
-            }
+            await _progenyHttpClient.AddWord(vocabItem);
+            //await _context.VocabularyDb.AddAsync(vocabItem);
+            //await _context.SaveChangesAsync();
 
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -1615,7 +1599,7 @@ namespace KinaUnaWeb.Controllers
         {
 
             VocabularyItemViewModel model = new VocabularyItemViewModel();
-            VocabularyItem vocab = await _context.VocabularyDb.SingleAsync(v => v.WordId == itemId);
+            VocabularyItem vocab = await _progenyHttpClient.GetWord(itemId); // _context.VocabularyDb.SingleAsync(v => v.WordId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1677,18 +1661,10 @@ namespace KinaUnaWeb.Controllers
                 model.SoundsLike = vocab.SoundsLike;
                 model.Word = vocab.Word;
                 model.WordId = vocab.WordId;
-                _context.VocabularyDb.Update(model);
-                await _context.SaveChangesAsync();
 
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.WordId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vocabulary);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.Date.Value;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
+                await _progenyHttpClient.UpdateWord(model);
+                //_context.VocabularyDb.Update(model);
+                //await _context.SaveChangesAsync();
 
             }
             return RedirectToAction("Index", "Vocabulary");
@@ -1697,7 +1673,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteVocabulary(int itemId)
         {
-            VocabularyItem model = await _context.VocabularyDb.SingleAsync(v => v.WordId == itemId);
+            VocabularyItem model = await _progenyHttpClient.GetWord(itemId); // _context.VocabularyDb.SingleAsync(v => v.WordId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1715,7 +1691,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteVocabulary(VocabularyItem model)
         {
-            VocabularyItem vocab = await _context.VocabularyDb.SingleAsync(v => v.WordId == model.WordId);
+            VocabularyItem vocab = await _progenyHttpClient.GetWord(model.WordId); // _context.VocabularyDb.SingleAsync(v => v.WordId == model.WordId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -1726,20 +1702,11 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.WordId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vocabulary);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
-
-            _context.VocabularyDb.Remove(vocab);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.DeleteWord(vocab.WordId);
+            //_context.VocabularyDb.Remove(vocab);
+            //await _context.SaveChangesAsync();
             return RedirectToAction("Index", "Vocabulary");
         }
-
 
         [HttpGet]
         public async Task<IActionResult> AddSkill()

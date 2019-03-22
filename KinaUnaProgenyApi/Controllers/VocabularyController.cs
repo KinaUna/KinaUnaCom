@@ -99,6 +99,25 @@ namespace KinaUnaProgenyApi.Controllers
             _context.VocabularyDb.Add(vocabularyItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = vocabularyItem.ProgenyId;
+            tItem.AccessLevel = vocabularyItem.AccessLevel;
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Vocabulary;
+            tItem.ItemId = vocabularyItem.WordId.ToString();
+            UserInfo userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+            tItem.CreatedBy = userinfo.UserId;
+            tItem.CreatedTime = DateTime.UtcNow;
+            if (vocabularyItem.Date != null)
+            {
+                tItem.ProgenyTime = vocabularyItem.Date.Value;
+            }
+            else
+            {
+                tItem.ProgenyTime = DateTime.UtcNow;
+            }
+
+            await _context.TimeLineDb.AddAsync(tItem);
+            await _context.SaveChangesAsync();
             return Ok(vocabularyItem);
         }
 
@@ -141,6 +160,19 @@ namespace KinaUnaProgenyApi.Controllers
             _context.VocabularyDb.Update(vocabularyItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == vocabularyItem.WordId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vocabulary);
+            if (tItem != null)
+            {
+                if (vocabularyItem.Date != null)
+                {
+                    tItem.ProgenyTime = vocabularyItem.Date.Value;
+                }
+                tItem.AccessLevel = vocabularyItem.AccessLevel;
+                _context.TimeLineDb.Update(tItem);
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(vocabularyItem);
         }
 
@@ -165,6 +197,14 @@ namespace KinaUnaProgenyApi.Controllers
                 else
                 {
                     return NotFound();
+                }
+
+                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                    t.ItemId == vocabularyItem.WordId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vocabulary);
+                if (tItem != null)
+                {
+                    _context.TimeLineDb.Remove(tItem);
+                    await _context.SaveChangesAsync();
                 }
 
                 _context.VocabularyDb.Remove(vocabularyItem);

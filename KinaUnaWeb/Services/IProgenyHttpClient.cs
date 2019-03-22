@@ -72,5 +72,10 @@ namespace KinaUnaWeb.Services
         Task<Vaccination> UpdateVaccination(Vaccination vaccination);
         Task<bool> DeleteVaccination(int vaccinationId);
         Task<List<Vaccination>> GetVaccinationsList(int progenyId, int accessLevel);
+        Task<VocabularyItem> GetWord(int wordId);
+        Task<VocabularyItem> AddWord(VocabularyItem word);
+        Task<VocabularyItem> UpdateWord(VocabularyItem word);
+        Task<bool> DeleteWord(int wordId);
+        Task<List<VocabularyItem>> GetWordsList(int progenyId, int accessLevel);
     }
 }

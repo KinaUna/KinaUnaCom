@@ -2037,5 +2037,160 @@ namespace KinaUnaWeb.Services
 
             return progenyVaccinationsList;
         }
+
+        public async Task<VocabularyItem> GetWord(int wordId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            VocabularyItem wordItem = new VocabularyItem();
+            string vocabularyApiPath = "/api/vocabulary/" + wordId;
+            var wordUri = clientUri + vocabularyApiPath;
+            var wordResponse = await httpClient.GetAsync(wordUri).ConfigureAwait(false);
+            if (wordResponse.IsSuccessStatusCode)
+            {
+                var wordAsString = await wordResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                wordItem = JsonConvert.DeserializeObject<VocabularyItem>(wordAsString);
+            }
+
+            return wordItem;
+        }
+
+        public async Task<VocabularyItem> AddWord(VocabularyItem word)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string vocabularyApiPath = "/api/vocabulary/";
+            var wordUri = clientUri + vocabularyApiPath;
+            await httpClient.PostAsync(wordUri, new StringContent(JsonConvert.SerializeObject(word), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return word;
+        }
+
+        public async Task<VocabularyItem> UpdateWord(VocabularyItem word)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateVocabularyApiPath = "/api/vocabulary/" + word.WordId;
+            var updateWordUri = clientUri + updateVocabularyApiPath;
+            var updateWordResponseString = await updateHttpClient.PutAsync(updateWordUri, word, new JsonMediaTypeFormatter());
+            string returnString = await updateWordResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<VocabularyItem>(returnString);
+        }
+
+        public async Task<bool> DeleteWord(int wordId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string vocabularyApiPath = "/api/vocabulary/" + wordId;
+            var wordUri = clientUri + vocabularyApiPath;
+            await httpClient.DeleteAsync(wordUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<VocabularyItem>> GetWordsList(int progenyId, int accessLevel)
+        {
+            List<VocabularyItem> progenyWordsList = new List<VocabularyItem>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string vocabularyApiPath = "/api/vocabulary/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var wordsUri = clientUri + vocabularyApiPath;
+            var wordsResponse = await httpClient.GetAsync(wordsUri).ConfigureAwait(false);
+            if (wordsResponse.IsSuccessStatusCode)
+            {
+                var wordsAsString = await wordsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyWordsList = JsonConvert.DeserializeObject<List<VocabularyItem>>(wordsAsString);
+            }
+
+            return progenyWordsList;
+        }
     }
 }
