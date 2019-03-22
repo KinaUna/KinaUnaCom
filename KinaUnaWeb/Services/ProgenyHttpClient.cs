@@ -1417,5 +1417,160 @@ namespace KinaUnaWeb.Services
 
             return progenyLocationsList;
         }
+
+        public async Task<Measurement> GetMeasurement(int measurementId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Measurement measurementItem = new Measurement();
+            string measurementsApiPath = "/api/measurements/" + measurementId;
+            var measurementUri = clientUri + measurementsApiPath;
+            var measurementResponse = await httpClient.GetAsync(measurementUri).ConfigureAwait(false);
+            if (measurementResponse.IsSuccessStatusCode)
+            {
+                var measurementAsString = await measurementResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                measurementItem = JsonConvert.DeserializeObject<Measurement>(measurementAsString);
+            }
+
+            return measurementItem;
+        }
+
+        public async Task<Measurement> AddMeasurement(Measurement measurement)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string measurementsApiPath = "/api/measurements/";
+            var measurementUri = clientUri + measurementsApiPath;
+            await httpClient.PostAsync(measurementUri, new StringContent(JsonConvert.SerializeObject(measurement), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return measurement;
+        }
+
+        public async Task<Measurement> UpdateMeasurement(Measurement measurement)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateMeasurementsApiPath = "/api/measurements/" + measurement.MeasurementId;
+            var updateMeasurementUri = clientUri + updateMeasurementsApiPath;
+            var updateMeasurementResponseString = await updateHttpClient.PutAsync(updateMeasurementUri, measurement, new JsonMediaTypeFormatter());
+            string returnString = await updateMeasurementResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Measurement>(returnString);
+        }
+
+        public async Task<bool> DeleteMeasurement(int measurementId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string measurementsApiPath = "/api/measurements/" + measurementId;
+            var measurementUri = clientUri + measurementsApiPath;
+            await httpClient.DeleteAsync(measurementUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Measurement>> GetMeasurementsList(int progenyId, int accessLevel)
+        {
+            List<Measurement> progenyMeasurementsList = new List<Measurement>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string measurementsApiPath = "/api/measurements/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var measurementsUri = clientUri + measurementsApiPath;
+            var measurementsResponse = await httpClient.GetAsync(measurementsUri).ConfigureAwait(false);
+            if (measurementsResponse.IsSuccessStatusCode)
+            {
+                var measurementsAsString = await measurementsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyMeasurementsList = JsonConvert.DeserializeObject<List<Measurement>>(measurementsAsString);
+            }
+
+            return progenyMeasurementsList;
+        }
     }
 }

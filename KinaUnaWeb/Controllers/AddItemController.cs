@@ -2428,20 +2428,11 @@ namespace KinaUnaWeb.Controllers
             measurementItem.EyeColor = model.EyeColor;
             measurementItem.AccessLevel = model.AccessLevel;
             measurementItem.Author = userinfo.UserId;
-            await _context.MeasurementsDb.AddAsync(measurementItem);
-            await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = measurementItem.ProgenyId;
-            tItem.AccessLevel = measurementItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Measurement;
-            tItem.ItemId = measurementItem.MeasurementId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            tItem.ProgenyTime = measurementItem.Date;
+            await _progenyHttpClient.AddMeasurement(measurementItem);
+            //await _context.MeasurementsDb.AddAsync(measurementItem);
+            //await _context.SaveChangesAsync();
 
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -2494,7 +2485,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> EditMeasurement(int itemId)
         {
             MeasurementViewModel model = new MeasurementViewModel();
-            Measurement measurement = await _context.MeasurementsDb.SingleAsync(m => m.MeasurementId == itemId);
+            Measurement measurement = await _progenyHttpClient.GetMeasurement(itemId); // _context.MeasurementsDb.SingleAsync(m => m.MeasurementId == itemId);
 
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
@@ -2550,18 +2541,10 @@ namespace KinaUnaWeb.Controllers
                 model.Circumference = measurement.Circumference;
                 model.HairColor = measurement.HairColor;
                 model.EyeColor = measurement.EyeColor;
-                _context.MeasurementsDb.Update(model);
-                await _context.SaveChangesAsync();
 
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == model.MeasurementId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Measurement);
-                if (tItem != null)
-                {
-                    tItem.ProgenyTime = model.Date;
-                    tItem.AccessLevel = model.AccessLevel;
-                    _context.TimeLineDb.Update(tItem);
-                    await _context.SaveChangesAsync();
-                }
+                await _progenyHttpClient.UpdateMeasurement(model);
+                //_context.MeasurementsDb.Update(model);
+                //await _context.SaveChangesAsync();
             }
             return RedirectToAction("Index", "Measurements");
         }
@@ -2569,7 +2552,7 @@ namespace KinaUnaWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> DeleteMeasurement(int itemId)
         {
-            Measurement model = await _context.MeasurementsDb.SingleAsync(m => m.MeasurementId == itemId);
+            Measurement model = await _progenyHttpClient.GetMeasurement(itemId); // _context.MeasurementsDb.SingleAsync(m => m.MeasurementId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -2586,7 +2569,7 @@ namespace KinaUnaWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteMeasurement(Measurement model)
         {
-            Measurement measurement = await _context.MeasurementsDb.SingleAsync(m => m.MeasurementId == model.MeasurementId);
+            Measurement measurement = await _progenyHttpClient.GetMeasurement(model.MeasurementId); // _context.MeasurementsDb.SingleAsync(m => m.MeasurementId == model.MeasurementId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -2596,16 +2579,11 @@ namespace KinaUnaWeb.Controllers
                 // Todo: Show no access info.
                 return RedirectToAction("Index");
             }
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.MeasurementId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Measurement);
-            if (tItem != null)
-            {
-                _context.TimeLineDb.Remove(tItem);
-                await _context.SaveChangesAsync();
-            }
 
-            _context.MeasurementsDb.Remove(measurement);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.DeleteMeasurement(model.MeasurementId);
+            //_context.MeasurementsDb.Remove(measurement);
+            //await _context.SaveChangesAsync();
+
             return RedirectToAction("Index", "Measurements");
         }
 

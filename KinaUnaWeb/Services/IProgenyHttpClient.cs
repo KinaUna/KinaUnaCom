@@ -52,5 +52,10 @@ namespace KinaUnaWeb.Services
         Task<Location> UpdateLocation(Location location);
         Task<bool> DeleteLocation(int locationId);
         Task<List<Location>> GetLocationsList(int progenyId, int accessLevel);
+        Task<Measurement> GetMeasurement(int measurementId);
+        Task<Measurement> AddMeasurement(Measurement measurement);
+        Task<Measurement> UpdateMeasurement(Measurement measurement);
+        Task<bool> DeleteMeasurement(int measurementId);
+        Task<List<Measurement>> GetMeasurementsList(int progenyId, int accessLevel);
     }
 }

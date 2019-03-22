@@ -100,6 +100,19 @@ namespace KinaUnaProgenyApi.Controllers
             _context.MeasurementsDb.Add(measurementItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = measurementItem.ProgenyId;
+            tItem.AccessLevel = measurementItem.AccessLevel;
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Measurement;
+            tItem.ItemId = measurementItem.MeasurementId.ToString();
+            UserInfo userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+            tItem.CreatedBy = userinfo?.UserId ?? "Unknown";
+            tItem.CreatedTime = DateTime.UtcNow;
+            tItem.ProgenyTime = measurementItem.Date;
+
+            await _context.TimeLineDb.AddAsync(tItem);
+            await _context.SaveChangesAsync();
+
             return Ok(measurementItem);
         }
 
@@ -143,6 +156,15 @@ namespace KinaUnaProgenyApi.Controllers
             _context.MeasurementsDb.Update(measurementItem);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == measurementItem.MeasurementId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Measurement);
+            if (tItem != null)
+            {
+                tItem.ProgenyTime = measurementItem.Date;
+                tItem.AccessLevel = measurementItem.AccessLevel;
+                _context.TimeLineDb.Update(tItem);
+                await _context.SaveChangesAsync();
+            }
             return Ok(measurementItem);
         }
 
@@ -168,6 +190,15 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     return NotFound();
                 }
+
+                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                    t.ItemId == measurementItem.MeasurementId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Measurement);
+                if (tItem != null)
+                {
+                    _context.TimeLineDb.Remove(tItem);
+                    await _context.SaveChangesAsync();
+                }
+
                 _context.MeasurementsDb.Remove(measurementItem);
                 await _context.SaveChangesAsync();
                 return NoContent();
