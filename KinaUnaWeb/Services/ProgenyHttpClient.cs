@@ -466,6 +466,41 @@ namespace KinaUnaWeb.Services
             return progenyLocations;
         }
 
+        public async Task<List<TimeLineItem>> GetProgenyLatestPosts(int progenyId, int accessLevel)
+        {
+            List<TimeLineItem> progenyPosts = new List<TimeLineItem>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string latestApiPath = "/api/timeline/progenylatest/" + progenyId + "/" + accessLevel + "/5/0";
+            var latestUri = clientUri + latestApiPath;
+            var latestResponse = await httpClient.GetAsync(latestUri).ConfigureAwait(false);
+            if (latestResponse.IsSuccessStatusCode)
+            {
+                var latestAsString = await latestResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyPosts = JsonConvert.DeserializeObject<List<TimeLineItem>>(latestAsString);
+            }
+
+            return progenyPosts;
+        }
+
         public async Task<UserAccess> AddUserAccess(UserAccess userAccess)
         {
             HttpClient httpClient = new HttpClient();
@@ -849,6 +884,41 @@ namespace KinaUnaWeb.Services
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
             string calendarApiPath = "/api/calendar/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var calendarUri = clientUri + calendarApiPath;
+            var calendarResponse = await httpClient.GetAsync(calendarUri).ConfigureAwait(false);
+            if (calendarResponse.IsSuccessStatusCode)
+            {
+                var calendarAsString = await calendarResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyCalendarList = JsonConvert.DeserializeObject<List<CalendarItem>>(calendarAsString);
+            }
+
+            return progenyCalendarList;
+        }
+
+        public async Task<List<CalendarItem>> GetUpcomingEvents(int progenyId, int accessLevel)
+        {
+            List<CalendarItem> progenyCalendarList = new List<CalendarItem>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string calendarApiPath = "/api/calendar/eventlist/" + progenyId + "/" + accessLevel;
             var calendarUri = clientUri + calendarApiPath;
             var calendarResponse = await httpClient.GetAsync(calendarUri).ConfigureAwait(false);
             if (calendarResponse.IsSuccessStatusCode)

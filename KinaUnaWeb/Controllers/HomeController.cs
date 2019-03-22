@@ -28,7 +28,6 @@ namespace KinaUnaWeb.Controllers
     public class HomeController : Controller
     {
         private int _progId = Constants.DefaultChildId;
-        private readonly WebDbContext _context;
         private readonly IProgenyHttpClient _progenyHttpClient;
         private readonly IMediaHttpClient _mediaHttpClient;
         private readonly IConfiguration _configuration;
@@ -37,11 +36,10 @@ namespace KinaUnaWeb.Controllers
         private readonly IHostingEnvironment _env;
         private readonly string _defaultUser = Constants.DefaultUserEmail;
         
-        public HomeController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient, WebDbContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ImageStore imageStore, IHostingEnvironment env)
+        public HomeController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ImageStore imageStore, IHostingEnvironment env)
         {
             _progenyHttpClient = progenyHttpClient;
             _mediaHttpClient = mediaHttpClient;
-            _context = context;  // Todo: Replace _context with httpClient?
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
             _imageStore = imageStore;
@@ -214,14 +212,11 @@ namespace KinaUnaWeb.Controllers
             feedModel.PicDays = picTime.CalcDays();
             feedModel.PicHours = picTime.CalcHours();
             feedModel.PicMinutes = picTime.CalcMinutes();
-            
-
             feedModel.Progeny = progeny;
             feedModel.EventsList = new List<CalendarItem>();
-            feedModel.EventsList = await _context.CalendarDb.AsNoTracking()
-                .Where(e => e.ProgenyId == progeny.Id && e.EndTime > DateTime.UtcNow && e.AccessLevel >= userAccessLevel).ToListAsync();
-            feedModel.EventsList = feedModel.EventsList.OrderBy(e => e.StartTime).ToList();
-            feedModel.EventsList = feedModel.EventsList.Take(5).ToList();
+            feedModel.EventsList = await _progenyHttpClient.GetUpcomingEvents(_progId, userAccessLevel); // _context.CalendarDb.AsNoTracking().Where(e => e.ProgenyId == progeny.Id && e.EndTime > DateTime.UtcNow && e.AccessLevel >= userAccessLevel).ToListAsync();
+            // feedModel.EventsList = feedModel.EventsList.OrderBy(e => e.StartTime).ToList();
+            // feedModel.EventsList = feedModel.EventsList.Take(5).ToList();
             foreach (CalendarItem eventItem in feedModel.EventsList)
             {
                 if (eventItem.StartTime.HasValue && eventItem.EndTime.HasValue)
@@ -233,7 +228,7 @@ namespace KinaUnaWeb.Controllers
 
             feedModel.LatestPosts = new TimeLineViewModel();
             feedModel.LatestPosts.TimeLineItems = new List<TimeLineItem>();
-            feedModel.LatestPosts.TimeLineItems = await _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == _progId && t.AccessLevel >= userAccessLevel && t.ProgenyTime < DateTime.UtcNow).ToListAsync();
+            feedModel.LatestPosts.TimeLineItems = await _progenyHttpClient.GetProgenyLatestPosts(_progId, userAccessLevel); // _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == _progId && t.AccessLevel >= userAccessLevel && t.ProgenyTime < DateTime.UtcNow).ToListAsync();
             if (feedModel.LatestPosts.TimeLineItems.Any())
             {
                 feedModel.LatestPosts.TimeLineItems = feedModel.LatestPosts.TimeLineItems.OrderByDescending(t => t.ProgenyTime).Take(5).ToList();
