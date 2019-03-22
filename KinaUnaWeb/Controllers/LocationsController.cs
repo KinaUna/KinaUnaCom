@@ -8,24 +8,20 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
-using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace KinaUnaWeb.Controllers
 {
     public class LocationsController : Controller
     {
-        private readonly WebDbContext _context;
         private readonly IProgenyHttpClient _progenyHttpClient;
         private readonly IMediaHttpClient _mediaHttpClient;
         private int _progId = Constants.DefaultChildId;
         private bool _userIsProgenyAdmin;
         private readonly string _defaultUser = Constants.DefaultUserEmail;
 
-        public LocationsController(WebDbContext context, IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient)
+        public LocationsController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient)
         {
-            _context = context; // Todo: Replace _context with httpClient
             _progenyHttpClient = progenyHttpClient;
             _mediaHttpClient = mediaHttpClient;
         }
@@ -34,7 +30,7 @@ namespace KinaUnaWeb.Controllers
         {
             _progId = childId;
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
-            
+
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
             if (childId == 0 && userinfo.ViewChild > 0)
             {
@@ -47,18 +43,6 @@ namespace KinaUnaWeb.Controllers
             }
 
             Progeny progeny = await _progenyHttpClient.GetProgeny(_progId);
-            if (progeny == null)
-            {
-                progeny = new Progeny();
-                progeny.Admins = Constants.AdminEmail;
-                progeny.Id = 0;
-                progeny.BirthDay = DateTime.UtcNow;
-                progeny.Name = "No Children in the Database";
-                progeny.NickName = "No default child defined";
-                progeny.TimeZone = Constants.DefaultTimezone;
-                progeny.PictureLink = Constants.ProfilePictureUrl;
-            }
-
             List<UserAccess> accessList = await _progenyHttpClient.GetProgenyAccessList(_progId);
 
             int userAccessLevel = (int)AccessLevel.Public;
@@ -81,10 +65,10 @@ namespace KinaUnaWeb.Controllers
             List<string> tagsList = new List<string>();
 
             // ToDo: Implement _progenyHttpClient.GetLocations() 
-            var locationsList = _context.LocationsDb.AsNoTracking().Where(l => l.ProgenyId == _progId).OrderBy(l => l.Date).ToList();
+            var locationsList = await _progenyHttpClient.GetLocationsList(_progId, userAccessLevel); // _context.LocationsDb.AsNoTracking().Where(l => l.ProgenyId == _progId).OrderBy(l => l.Date).ToList();
             if (!string.IsNullOrEmpty(tagFilter))
             {
-                locationsList = _context.LocationsDb.AsNoTracking().Where(l => l.ProgenyId == _progId && l.Tags.Contains(tagFilter)).OrderBy(l => l.Date).ToList();
+                locationsList = locationsList.Where(l => l.Tags.Contains(tagFilter)).ToList();
             }
             locationsList = locationsList.OrderBy(l => l.Date).ToList();
 
@@ -122,7 +106,7 @@ namespace KinaUnaWeb.Controllers
                 tags = tags + tstr + ",";
             }
             model.Tags = tags.TrimEnd(',');
-            
+
             if (sortBy == 1)
             {
                 model.LocationsList.Reverse();
@@ -138,7 +122,7 @@ namespace KinaUnaWeb.Controllers
         {
             _progId = childId;
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
-            
+
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
             if (childId == 0 && userinfo.ViewChild > 0)
             {
@@ -164,7 +148,7 @@ namespace KinaUnaWeb.Controllers
                 _userIsProgenyAdmin = true;
                 userAccessLevel = (int)AccessLevel.Private;
             }
-            
+
             LocationViewModel model = new LocationViewModel();
             model.LocationsList = new List<Location>();
             List<string> tagsList = new List<string>();

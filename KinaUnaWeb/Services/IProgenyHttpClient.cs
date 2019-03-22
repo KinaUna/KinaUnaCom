@@ -47,5 +47,10 @@ namespace KinaUnaWeb.Services
         Task<Friend> UpdateFriend(Friend friend);
         Task<bool> DeleteFriend(int friendId);
         Task<List<Friend>> GetFriendsList(int progenyId, int accessLevel);
+        Task<Location> GetLocation(int locationId);
+        Task<Location> AddLocation(Location location);
+        Task<Location> UpdateLocation(Location location);
+        Task<bool> DeleteLocation(int locationId);
+        Task<List<Location>> GetLocationsList(int progenyId, int accessLevel);
     }
 }

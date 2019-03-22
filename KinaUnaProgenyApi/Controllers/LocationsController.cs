@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
@@ -113,6 +114,26 @@ namespace KinaUnaProgenyApi.Controllers
             _context.LocationsDb.Add(location);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = location.ProgenyId;
+            tItem.AccessLevel = location.AccessLevel;
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Location;
+            tItem.ItemId = location.LocationId.ToString();
+            UserInfo userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+            tItem.CreatedBy = userinfo.UserId;
+            tItem.CreatedTime = DateTime.UtcNow;
+            if (location.Date.HasValue)
+            {
+                tItem.ProgenyTime = location.Date.Value;
+            }
+            else
+            {
+                tItem.ProgenyTime = DateTime.UtcNow;
+            }
+
+            await _context.TimeLineDb.AddAsync(tItem);
+            await _context.SaveChangesAsync();
+
             return Ok(location);
         }
 
@@ -125,7 +146,7 @@ namespace KinaUnaProgenyApi.Controllers
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
             if (prog != null)
             {
-                // Check if user is allowed to add locations for this child.
+                // Check if user is allowed to edit locations for this child.
                 if (!prog.Admins.ToUpper().Contains(userEmail.ToUpper()))
                 {
                     return Unauthorized();
@@ -164,6 +185,19 @@ namespace KinaUnaProgenyApi.Controllers
             _context.LocationsDb.Update(location);
             await _context.SaveChangesAsync();
 
+            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == location.LocationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Location);
+            if (tItem != null)
+            {
+                if (location.Date.HasValue)
+                {
+                    tItem.ProgenyTime = location.Date.Value;
+                }
+                tItem.AccessLevel = location.AccessLevel;
+                _context.TimeLineDb.Update(tItem);
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(location);
         }
 
@@ -188,6 +222,19 @@ namespace KinaUnaProgenyApi.Controllers
                 else
                 {
                     return NotFound();
+                }
+
+                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                    t.ItemId == location.LocationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Location);
+                if (tItem != null)
+                {
+                    if (location.Date.HasValue)
+                    {
+                        tItem.ProgenyTime = location.Date.Value;
+                    }
+                    tItem.AccessLevel = location.AccessLevel;
+                    _context.TimeLineDb.Remove(tItem);
+                    await _context.SaveChangesAsync();
                 }
 
                 _context.LocationsDb.Remove(location);

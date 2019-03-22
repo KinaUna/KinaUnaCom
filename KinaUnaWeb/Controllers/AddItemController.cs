@@ -3628,27 +3628,10 @@ namespace KinaUnaWeb.Controllers
             locItem.Author = userinfo.UserId;
             locItem.AccessLevel = model.AccessLevel;
 
-            await _context.LocationsDb.AddAsync(locItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.AddLocation(locItem);
+            //await _context.LocationsDb.AddAsync(locItem);
+            //await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = new TimeLineItem();
-            tItem.ProgenyId = locItem.ProgenyId;
-            tItem.AccessLevel = locItem.AccessLevel;
-            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Location;
-            tItem.ItemId = locItem.LocationId.ToString();
-            tItem.CreatedBy = userinfo.UserId;
-            tItem.CreatedTime = DateTime.UtcNow;
-            if (locItem.Date.HasValue)
-            {
-                tItem.ProgenyTime = locItem.Date.Value;
-            }
-            else
-            {
-                tItem.ProgenyTime = DateTime.UtcNow;
-            }
-
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -3738,7 +3721,7 @@ namespace KinaUnaWeb.Controllers
 
                         model.ProgenyList.Add(selItem);
 
-                        var locList1 = _context.LocationsDb.Where(l => l.ProgenyId == chld.Id).ToList();
+                        var locList1 = await _progenyHttpClient.GetLocationsList(chld.Id, 0); // _context.LocationsDb.Where(l => l.ProgenyId == chld.Id).ToList();
                         foreach (Location loc in locList1)
                         {
                             if (!String.IsNullOrEmpty(loc.Tags))
@@ -3757,7 +3740,7 @@ namespace KinaUnaWeb.Controllers
                 }
             }
 
-            Location locItem = await _context.LocationsDb.SingleOrDefaultAsync(l => l.LocationId == itemId);
+            Location locItem = await _progenyHttpClient.GetLocation(itemId); // _context.LocationsDb.SingleOrDefaultAsync(l => l.LocationId == itemId);
             Progeny prog = await _progenyHttpClient.GetProgeny(locItem.ProgenyId);
             model.Progeny = prog;
             model.LocationId = locItem.LocationId;
@@ -3817,7 +3800,7 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            Location locItem = await _context.LocationsDb.SingleOrDefaultAsync(l => l.LocationId == model.LocationId);
+            Location locItem = await _progenyHttpClient.GetLocation(model.LocationId); // _context.LocationsDb.SingleOrDefaultAsync(l => l.LocationId == model.LocationId);
             model.Progeny = prog;
             locItem.Latitude = model.Latitude;
             locItem.Longitude = model.Longitude;
@@ -3842,21 +3825,11 @@ namespace KinaUnaWeb.Controllers
 
             locItem.AccessLevel = model.AccessLevel;
 
-            _context.LocationsDb.Update(locItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.UpdateLocation(locItem);
+            //_context.LocationsDb.Update(locItem);
+            //await _context.SaveChangesAsync();
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == model.LocationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Location);
-            if (tItem != null)
-            {
-                if (locItem.Date.HasValue)
-                {
-                    tItem.ProgenyTime = locItem.Date.Value;
-                }
-                tItem.AccessLevel = model.AccessLevel;
-                _context.TimeLineDb.Update(tItem);
-                await _context.SaveChangesAsync();
-            }
+
 
             return RedirectToAction("Index", "Locations");
         }
@@ -3864,7 +3837,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> DeleteLocation(int itemId)
         {
 
-            Location model = await _context.LocationsDb.SingleAsync(l => l.LocationId == itemId);
+            Location model = await _progenyHttpClient.GetLocation(itemId); // _context.LocationsDb.SingleAsync(l => l.LocationId == itemId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3882,7 +3855,7 @@ namespace KinaUnaWeb.Controllers
         public async Task<IActionResult> DeleteLocation(Location model)
         {
 
-            Location locItem = await _context.LocationsDb.SingleAsync(l => l.LocationId == model.LocationId);
+            Location locItem = await _progenyHttpClient.GetLocation(model.LocationId); // _context.LocationsDb.SingleAsync(l => l.LocationId == model.LocationId);
             string userEmail = HttpContext.User.FindFirst("email")?.Value ?? _defaultUser;
             UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
 
@@ -3893,8 +3866,9 @@ namespace KinaUnaWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            _context.LocationsDb.Remove(locItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.DeleteLocation(locItem.LocationId);
+            //_context.LocationsDb.Remove(locItem);
+            //await _context.SaveChangesAsync();
             return RedirectToAction("Index", "Locations");
         }
 

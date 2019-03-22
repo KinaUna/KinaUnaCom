@@ -1262,5 +1262,160 @@ namespace KinaUnaWeb.Services
 
             return progenyFriendsList;
         }
+
+        public async Task<Location> GetLocation(int locationId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            Location locationItem = new Location();
+            string locationsApiPath = "/api/locations/" + locationId;
+            var locationUri = clientUri + locationsApiPath;
+            var locationResponse = await httpClient.GetAsync(locationUri).ConfigureAwait(false);
+            if (locationResponse.IsSuccessStatusCode)
+            {
+                var locationAsString = await locationResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                locationItem = JsonConvert.DeserializeObject<Location>(locationAsString);
+            }
+
+            return locationItem;
+        }
+
+        public async Task<Location> AddLocation(Location location)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string locationsApiPath = "/api/locations/";
+            var locationUri = clientUri + locationsApiPath;
+            await httpClient.PostAsync(locationUri, new StringContent(JsonConvert.SerializeObject(location), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return location;
+        }
+
+        public async Task<Location> UpdateLocation(Location location)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateApiPath = "/api/locations/" + location.LocationId;
+            var updateUri = clientUri + updateApiPath;
+            var updateResponseString = await updateHttpClient.PutAsync(updateUri, location, new JsonMediaTypeFormatter());
+            string returnString = await updateResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<Location>(returnString);
+        }
+
+        public async Task<bool> DeleteLocation(int locationId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string locationsApiPath = "/api/locations/" + locationId;
+            var locationUri = clientUri + locationsApiPath;
+            await httpClient.DeleteAsync(locationUri).ConfigureAwait(false);
+
+            return true;
+        }
+
+        public async Task<List<Location>> GetLocationsList(int progenyId, int accessLevel)
+        {
+            List<Location> progenyLocationsList = new List<Location>();
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string locationsApiPath = "/api/locations/progeny/" + progenyId + "?accessLevel=" + accessLevel;
+            var locationsUri = clientUri + locationsApiPath;
+            var locationsResponse = await httpClient.GetAsync(locationsUri).ConfigureAwait(false);
+            if (locationsResponse.IsSuccessStatusCode)
+            {
+                var locationsAsString = await locationsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                progenyLocationsList = JsonConvert.DeserializeObject<List<Location>>(locationsAsString);
+            }
+
+            return progenyLocationsList;
+        }
     }
 }
