@@ -72,6 +72,23 @@ namespace KinaUnaProgenyApi.Controllers
             return Unauthorized();
         }
 
+        [HttpGet("[action]/{itemId}/{itemType}")]
+        public async Task<IActionResult> GetTimeLineItemByItemId(string itemId, int itemType)
+        {
+            TimeLineItem result = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
+                t.ItemId == itemId && t.ItemType == itemType);
+
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
+                u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
+            {
+                return Ok(result);
+            }
+
+            return Unauthorized();
+        }
+
         // GET api/timeline/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTimeLineItem(int id)

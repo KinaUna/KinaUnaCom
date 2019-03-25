@@ -2263,6 +2263,126 @@ namespace KinaUnaWeb.Services
             return progenyWordsList;
         }
 
+        public async Task<TimeLineItem> GetTimeLineItem(string itemId, int itemType)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            TimeLineItem timeLineItem = new TimeLineItem();
+            string timeLineApiPath = "/api/timeline/" + "gettimelineitembyitemid/" + itemId + "/" + itemType;
+            var timeLineUri = clientUri + timeLineApiPath;
+            var timeLineResponse = await httpClient.GetAsync(timeLineUri).ConfigureAwait(false);
+            if (timeLineResponse.IsSuccessStatusCode)
+            {
+                var timeLineItemAsString = await timeLineResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                timeLineItem = JsonConvert.DeserializeObject<TimeLineItem>(timeLineItemAsString);
+            }
+
+            return timeLineItem;
+        }
+
+        public async Task<TimeLineItem> AddTimeLineItem(TimeLineItem timeLineItem)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string timeLineApiPath = "/api/timeline/";
+            var timeLineUri = clientUri + timeLineApiPath;
+            await httpClient.PostAsync(timeLineUri, new StringContent(JsonConvert.SerializeObject(timeLineItem), System.Text.Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            return timeLineItem;
+        }
+
+        public async Task<TimeLineItem> UpdateTimeLineItem(TimeLineItem timeLineItem)
+        {
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+
+            HttpClient updateHttpClient = new HttpClient();
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                updateHttpClient.SetBearerToken(accessToken);
+            }
+            updateHttpClient.BaseAddress = new Uri(clientUri);
+            updateHttpClient.DefaultRequestHeaders.Accept.Clear();
+            updateHttpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string updateTimeLineApiPath = "/api/timeline/" + timeLineItem.TimeLineId;
+            var updateTimeLineUri = clientUri + updateTimeLineApiPath;
+            var updateTimeLineResponseString = await updateHttpClient.PutAsync(updateTimeLineUri, timeLineItem, new JsonMediaTypeFormatter());
+            string returnString = await updateTimeLineResponseString.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<TimeLineItem>(returnString);
+        }
+
+        public async Task<bool> DeleteTimeLineItem(int timeLineItemId)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            else
+            {
+                accessToken = await GetNewToken();
+                httpClient.SetBearerToken(accessToken);
+            }
+
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+            string timeLineApiPath = "/api/timeline/" + timeLineItemId;
+            var timeLineUri = clientUri + timeLineApiPath;
+            await httpClient.DeleteAsync(timeLineUri).ConfigureAwait(false);
+
+            return true;
+        }
+
         public async Task<List<TimeLineItem>> GetTimeline(int progenyId, int accessLevel)
         {
             List<TimeLineItem> progenyTimeline = new List<TimeLineItem>();

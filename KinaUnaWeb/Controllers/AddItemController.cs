@@ -146,8 +146,9 @@ namespace KinaUnaWeb.Controllers
                         tItem.ProgenyTime = DateTime.UtcNow;
                     }
 
-                    await _context.TimeLineDb.AddAsync(tItem);
-                    await _context.SaveChangesAsync();
+                    await _progenyHttpClient.AddTimeLineItem(tItem);
+                    //await _context.TimeLineDb.AddAsync(tItem);
+                    //await _context.SaveChangesAsync();
 
                     string authorName = "";
                     if (!String.IsNullOrEmpty(userinfo.FirstName))
@@ -284,8 +285,7 @@ namespace KinaUnaWeb.Controllers
 
             await _mediaHttpClient.UpdatePicture(newPicture);
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == newPicture.PictureId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Photo);
+            TimeLineItem tItem = await _progenyHttpClient.GetTimeLineItem(newPicture.PictureId.ToString(), (int)KinaUnaTypes.TimeLineType.Photo); // _context.TimeLineDb.SingleOrDefaultAsync(t => t.ItemId == newPicture.PictureId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Photo);
             if (tItem != null)
             {
                 if (newPicture.PictureTime.HasValue)
@@ -297,10 +297,10 @@ namespace KinaUnaWeb.Controllers
                     tItem.ProgenyTime = DateTime.UtcNow;
                 }
                 tItem.AccessLevel = newPicture.AccessLevel;
-                _context.TimeLineDb.Update(tItem);
-                await _context.SaveChangesAsync();
+                await _progenyHttpClient.UpdateTimeLineItem(tItem);
+                //_context.TimeLineDb.Update(tItem);
+                //await _context.SaveChangesAsync();
             }
-
 
             return RedirectToRoute(new { controller = "Pictures", action = "Picture", id = model.PictureId, childId = model.ProgenyId, tagFilter = model.TagFilter, sortBy = model.SortBy });
         }
@@ -363,12 +363,13 @@ namespace KinaUnaWeb.Controllers
 
             if (pictureDeleted)
             {
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == picture.PictureId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Photo);
+                TimeLineItem tItem = await _progenyHttpClient.GetTimeLineItem(picture.PictureId.ToString(),
+                    (int)KinaUnaTypes.TimeLineType.Photo); // _context.TimeLineDb.SingleOrDefaultAsync(t => t.ItemId == picture.PictureId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Photo);
                 if (tItem != null)
                 {
-                    _context.TimeLineDb.Remove(tItem);
-                    await _context.SaveChangesAsync();
+                    await _progenyHttpClient.DeleteTimeLineItem(tItem.TimeLineId);
+                    //_context.TimeLineDb.Remove(tItem);
+                    //await _context.SaveChangesAsync();
                 }
 
                 string authorName = "";
@@ -661,8 +662,10 @@ namespace KinaUnaWeb.Controllers
                 tItem.ProgenyTime = DateTime.UtcNow;
             }
 
-            await _context.TimeLineDb.AddAsync(tItem);
-            await _context.SaveChangesAsync();
+            await _progenyHttpClient.AddTimeLineItem(tItem);
+            //await _context.TimeLineDb.AddAsync(tItem);
+            //await _context.SaveChangesAsync();
+
             string authorName = "";
             if (!String.IsNullOrEmpty(userinfo.FirstName))
             {
@@ -795,8 +798,8 @@ namespace KinaUnaWeb.Controllers
 
             await _mediaHttpClient.UpdateVideo(newVideo);
 
-            TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                t.ItemId == newVideo.VideoId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Video);
+            TimeLineItem tItem = await _progenyHttpClient.GetTimeLineItem(newVideo.VideoId.ToString(),
+                (int)KinaUnaTypes.TimeLineType.Video); // _context.TimeLineDb.SingleOrDefaultAsync(t => t.ItemId ==newVideo.VideoId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Video);
             if (tItem != null)
             {
                 if (newVideo.VideoTime.HasValue)
@@ -808,10 +811,10 @@ namespace KinaUnaWeb.Controllers
                     tItem.ProgenyTime = DateTime.UtcNow;
                 }
                 tItem.AccessLevel = newVideo.AccessLevel;
-                _context.TimeLineDb.Update(tItem);
-                await _context.SaveChangesAsync();
+                await _progenyHttpClient.UpdateTimeLineItem(tItem);
+                //_context.TimeLineDb.Update(tItem);
+                //await _context.SaveChangesAsync();
             }
-
 
             return RedirectToRoute(new { controller = "Videos", action = "Video", id = model.VideoId, childId = model.ProgenyId, tagFilter = model.TagFilter, sortBy = model.SortBy });
         }
@@ -867,20 +870,19 @@ namespace KinaUnaWeb.Controllers
                 }
             }
 
-
             if (videoDeleted)
             {
-                TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
-                    t.ItemId == video.VideoId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Video);
+                TimeLineItem tItem = await _progenyHttpClient.GetTimeLineItem(video.VideoId.ToString(),
+                    (int)KinaUnaTypes.TimeLineType.Video); // _context.TimeLineDb.SingleOrDefaultAsync(t => t.ItemId == video.VideoId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Video);
                 if (tItem != null)
                 {
-                    _context.TimeLineDb.Remove(tItem);
-                    await _context.SaveChangesAsync();
+                    await _progenyHttpClient.DeleteTimeLineItem(tItem.TimeLineId);
+                    //_context.TimeLineDb.Remove(tItem);
+                    //await _context.SaveChangesAsync();
                 }
             }
             // Todo: else, error, show info
-
-
+            
             // Todo: show confirmation info, instead of gallery page.
             return RedirectToAction("Index", "Videos");
         }
