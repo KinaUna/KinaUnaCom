@@ -2297,5 +2297,26 @@ namespace KinaUnaWeb.Services
 
             return progenyTimeline;
         }
+
+        public async Task SetViewChild(string userId, UserInfo userinfo)
+        {
+            HttpClient httpClient = new HttpClient();
+            string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
+            var currentContext = _httpContextAccessor.HttpContext;
+            string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                httpClient.SetBearerToken(accessToken);
+            }
+            httpClient.BaseAddress = new Uri(clientUri);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+
+            string setChildApiPath = "/api/userinfo/" + userId;
+            var setChildUri = clientUri + setChildApiPath;
+            await httpClient.PutAsJsonAsync(setChildUri, userinfo);
+        }
     }
 }

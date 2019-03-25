@@ -80,5 +80,6 @@ namespace KinaUnaWeb.Services
         Task<bool> DeleteWord(int wordId);
         Task<List<VocabularyItem>> GetWordsList(int progenyId, int accessLevel);
         Task<List<TimeLineItem>> GetTimeline(int progenyId, int accessLevel);
+        Task SetViewChild(string userId, UserInfo userinfo);
     }
 }

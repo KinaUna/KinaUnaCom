@@ -2,23 +2,16 @@
 using KinaUnaWeb.Models.HomeViewModels;
 using KinaUnaWeb.Models.ItemViewModels;
 using KinaUnaWeb.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using KinaUna.Data;
-using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Hosting;
 
@@ -30,18 +23,14 @@ namespace KinaUnaWeb.Controllers
         private int _progId = Constants.DefaultChildId;
         private readonly IProgenyHttpClient _progenyHttpClient;
         private readonly IMediaHttpClient _mediaHttpClient;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ImageStore _imageStore;
         private readonly IHostingEnvironment _env;
         private readonly string _defaultUser = Constants.DefaultUserEmail;
         
-        public HomeController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ImageStore imageStore, IHostingEnvironment env)
+        public HomeController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient, ImageStore imageStore, IHostingEnvironment env)
         {
             _progenyHttpClient = progenyHttpClient;
             _mediaHttpClient = mediaHttpClient;
-            _configuration = configuration;
-            _httpContextAccessor = httpContextAccessor;
             _imageStore = imageStore;
             _env = env;
         }
@@ -278,25 +267,12 @@ namespace KinaUnaWeb.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
-                HttpClient httpClient = new HttpClient();
-                string clientUri = _configuration.GetValue<string>("ProgenyApiServer");
-                var currentContext = _httpContextAccessor.HttpContext;
-                string accessToken = await AuthenticationHttpContextExtensions.GetTokenAsync(currentContext, OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
-                if (!string.IsNullOrWhiteSpace(accessToken))
+                if (User.Identity.IsAuthenticated)
                 {
-                    httpClient.SetBearerToken(accessToken);
+                    UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
+                    userinfo.ViewChild = childId;
+                    await _progenyHttpClient.SetViewChild(userId, userinfo);
                 }
-                httpClient.BaseAddress = new Uri(clientUri);
-                httpClient.DefaultRequestHeaders.Accept.Clear();
-                httpClient.DefaultRequestHeaders.Accept.Add(
-                    new MediaTypeWithQualityHeaderValue("application/json"));
-                
-                UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
-                userinfo.ViewChild = childId;
-                
-                string setChildApiPath = "/api/userinfo/" + userId;
-                var setChildUri = clientUri + setChildApiPath;
-                await httpClient.PutAsJsonAsync(setChildUri, userinfo);
             }
 
             return Redirect(returnUrl);
