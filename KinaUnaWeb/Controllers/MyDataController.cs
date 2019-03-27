@@ -277,6 +277,94 @@ namespace KinaUnaWeb.Controllers
                     videoRowNumber++;
                 }
 
+
+                // Calendar sheet
+                ExcelWorksheet calendarWorksheet = package.Workbook.Worksheets.Add("Calendar");
+
+                calendarWorksheet.Cells[1, 1].Value = Constants.AppName + " Calendar DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = calendarWorksheet.Cells[1, 1, 1, 9])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                calendarWorksheet.Cells[2, 1].Value = "Event ID";
+                calendarWorksheet.Cells[2, 2].Value = "Access Level";
+                calendarWorksheet.Cells[2, 3].Value = "Start Date and Time";
+                calendarWorksheet.Cells[2, 4].Value = "End Date and Time";
+                calendarWorksheet.Cells[2, 5].Value = "Title";
+                calendarWorksheet.Cells[2, 6].Value = "Notes";
+                calendarWorksheet.Cells[2, 7].Value = "Location";
+                calendarWorksheet.Cells[2, 8].Value = "Context";
+                calendarWorksheet.Cells[2, 9].Value = "All Day";
+
+
+                using (ExcelRange headerRange = calendarWorksheet.Cells[2, 1, 2, 9])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                calendarWorksheet.Row(1).Height = 45.0;
+                calendarWorksheet.Row(2).Style.Font.Bold = true;
+                calendarWorksheet.Row(2).Height = 30.0;
+                calendarWorksheet.Column(1).Width = 10;
+                calendarWorksheet.Column(2).Width = 10;
+                calendarWorksheet.Column(3).Width = 25;
+                calendarWorksheet.Column(4).Width = 25;
+                calendarWorksheet.Column(5).Width = 30;
+                calendarWorksheet.Column(6).Width = 40;
+                calendarWorksheet.Column(7).Width = 25;
+                calendarWorksheet.Column(8).Width = 15;
+                calendarWorksheet.Column(9).Width = 10;
+
+                List<CalendarItem> calendarItems = await _progenyHttpClient.GetCalendarList(progenyId, 0);
+                int calendarRowNumber = 3;
+                foreach (CalendarItem evt in calendarItems)
+                {
+                    calendarWorksheet.Cells[calendarRowNumber, 1].Value = evt.EventId;
+                    calendarWorksheet.Cells[calendarRowNumber, 2].Value = evt.AccessLevel;
+                    if (evt.StartTime.HasValue)
+                    {
+                        evt.StartTime = TimeZoneInfo.ConvertTimeFromUtc(evt.StartTime.Value,
+                            TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+                        calendarWorksheet.Cells[calendarRowNumber, 3].Value = evt.StartTime.Value.ToString("dd-MMM-yyyy HH:mm");
+                    }
+                    if (evt.EndTime.HasValue)
+                    {
+                        evt.EndTime = TimeZoneInfo.ConvertTimeFromUtc(evt.EndTime.Value,
+                            TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+                        calendarWorksheet.Cells[calendarRowNumber, 4].Value = evt.EndTime.Value.ToString("dd-MMM-yyyy HH:mm");
+                    }
+                    calendarWorksheet.Cells[calendarRowNumber, 5].Value = evt.Title;
+                    calendarWorksheet.Cells[calendarRowNumber, 6].Value = evt.Notes;
+                    calendarWorksheet.Cells[calendarRowNumber, 7].Value = evt.Location;
+                    calendarWorksheet.Cells[calendarRowNumber, 8].Value = evt.Context;
+                    calendarWorksheet.Cells[calendarRowNumber, 9].Value = evt.AllDay;
+                    calendarRowNumber++;
+                }
+
+                // Locations sheet
+
+                // Vocabulary sheet
+
+                // Skills sheet
+
+                // Friends sheet
+
+                // Measurements sheet
+
+                // Sleep sheet
+
+                // Contacts sheet
+
+                // Vaccinations sheet
                 package.Save();
             }
 
