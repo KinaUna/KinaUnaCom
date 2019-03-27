@@ -436,6 +436,62 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Vocabulary sheet
+                ExcelWorksheet vocabularyWorksheet = package.Workbook.Worksheets.Add("Vocabulary");
+
+                vocabularyWorksheet.Cells[1, 1].Value = Constants.AppName + " Vocabulary DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = vocabularyWorksheet.Cells[1, 1, 1, 7])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                vocabularyWorksheet.Cells[2, 1].Value = "Word ID";
+                vocabularyWorksheet.Cells[2, 2].Value = "Access Level";
+                vocabularyWorksheet.Cells[2, 3].Value = "Word";
+                vocabularyWorksheet.Cells[2, 4].Value = "Date";
+                vocabularyWorksheet.Cells[2, 5].Value = "Sounds Like";
+                vocabularyWorksheet.Cells[2, 6].Value = "Language";
+                vocabularyWorksheet.Cells[2, 7].Value = "Description";
+
+                using (ExcelRange headerRange = vocabularyWorksheet.Cells[2, 1, 2, 7])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                vocabularyWorksheet.Row(1).Height = 45.0;
+                vocabularyWorksheet.Row(2).Style.Font.Bold = true;
+                vocabularyWorksheet.Row(2).Height = 30.0;
+                vocabularyWorksheet.Column(1).Width = 10;
+                vocabularyWorksheet.Column(2).Width = 10;
+                vocabularyWorksheet.Column(3).Width = 25;
+                vocabularyWorksheet.Column(4).Width = 15;
+                vocabularyWorksheet.Column(5).Width = 30;
+                vocabularyWorksheet.Column(6).Width = 20;
+                vocabularyWorksheet.Column(7).Width = 45;
+
+                List<VocabularyItem> vocabularyItems = await _progenyHttpClient.GetWordsList(progenyId, 0);
+                int vocabularyRowNumber = 3;
+                foreach (VocabularyItem voc in vocabularyItems)
+                {
+                    vocabularyWorksheet.Cells[vocabularyRowNumber, 1].Value = voc.WordId;
+                    vocabularyWorksheet.Cells[vocabularyRowNumber, 2].Value = voc.AccessLevel;
+                    vocabularyWorksheet.Cells[vocabularyRowNumber, 3].Value = voc.Word;
+                    if (voc.Date.HasValue)
+                    {
+                        vocabularyWorksheet.Cells[vocabularyRowNumber, 4].Value = voc.Date.Value.ToString("dd-MMM-yyyy");
+                    }
+                    vocabularyWorksheet.Cells[vocabularyRowNumber, 5].Value = voc.SoundsLike;
+                    vocabularyWorksheet.Cells[vocabularyRowNumber, 6].Value = voc.Language;
+                    vocabularyWorksheet.Cells[vocabularyRowNumber, 7].Value = voc.Description;
+                    vocabularyRowNumber++;
+                }
 
                 // Skills sheet
 
@@ -448,6 +504,7 @@ namespace KinaUnaWeb.Controllers
                 // Contacts sheet
 
                 // Vaccinations sheet
+
                 package.Save();
             }
 
