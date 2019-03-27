@@ -351,6 +351,89 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Locations sheet
+                ExcelWorksheet locationsWorksheet = package.Workbook.Worksheets.Add("Locations");
+
+                locationsWorksheet.Cells[1, 1].Value = Constants.AppName + " Location DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = locationsWorksheet.Cells[1, 1, 1, 16])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                locationsWorksheet.Cells[2, 1].Value = "Location ID";
+                locationsWorksheet.Cells[2, 2].Value = "Access Level";
+                locationsWorksheet.Cells[2, 3].Value = "Name";
+                locationsWorksheet.Cells[2, 4].Value = "Longitude";
+                locationsWorksheet.Cells[2, 5].Value = "Latitude";
+                locationsWorksheet.Cells[2, 6].Value = "Date";
+                locationsWorksheet.Cells[2, 7].Value = "Street";
+                locationsWorksheet.Cells[2, 8].Value = "House Number";
+                locationsWorksheet.Cells[2, 9].Value = "Postal Code";
+                locationsWorksheet.Cells[2, 10].Value = "City";
+                locationsWorksheet.Cells[2, 11].Value = "District";
+                locationsWorksheet.Cells[2, 12].Value = "County";
+                locationsWorksheet.Cells[2, 13].Value = "State";
+                locationsWorksheet.Cells[2, 14].Value = "Country";
+                locationsWorksheet.Cells[2, 15].Value = "Notes";
+                locationsWorksheet.Cells[2, 16].Value = "Tags";
+
+                using (ExcelRange headerRange = locationsWorksheet.Cells[2, 1, 2, 16])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                locationsWorksheet.Row(1).Height = 45.0;
+                locationsWorksheet.Row(2).Style.Font.Bold = true;
+                locationsWorksheet.Row(2).Height = 30.0;
+                locationsWorksheet.Column(1).Width = 10;
+                locationsWorksheet.Column(2).Width = 10;
+                locationsWorksheet.Column(3).Width = 35;
+                locationsWorksheet.Column(4).Width = 15;
+                locationsWorksheet.Column(5).Width = 15;
+                locationsWorksheet.Column(6).Width = 15;
+                locationsWorksheet.Column(7).Width = 35;
+                locationsWorksheet.Column(8).Width = 10;
+                locationsWorksheet.Column(9).Width = 15;
+                locationsWorksheet.Column(10).Width = 25;
+                locationsWorksheet.Column(11).Width = 25;
+                locationsWorksheet.Column(12).Width = 25;
+                locationsWorksheet.Column(13).Width = 25;
+                locationsWorksheet.Column(14).Width = 25;
+                locationsWorksheet.Column(15).Width = 35;
+                locationsWorksheet.Column(16).Width = 25;
+
+                List<Location> locationItems = await _progenyHttpClient.GetLocationsList(progenyId, 0);
+                int locationsRowNumber = 3;
+                foreach (Location loc in locationItems)
+                {
+                    locationsWorksheet.Cells[locationsRowNumber, 1].Value = loc.LocationId;
+                    locationsWorksheet.Cells[locationsRowNumber, 2].Value = loc.AccessLevel;
+                    locationsWorksheet.Cells[locationsRowNumber, 3].Value = loc.Name;
+                    locationsWorksheet.Cells[locationsRowNumber, 4].Value = loc.Longitude;
+                    locationsWorksheet.Cells[locationsRowNumber, 5].Value = loc.Latitude;
+                    if (loc.Date.HasValue)
+                    {
+                        locationsWorksheet.Cells[locationsRowNumber, 6].Value = loc.Date.Value.ToString("dd-MMM-yyyy");
+                    }
+                    locationsWorksheet.Cells[locationsRowNumber, 7].Value = loc.StreetName;
+                    locationsWorksheet.Cells[locationsRowNumber, 8].Value = loc.HouseNumber;
+                    locationsWorksheet.Cells[locationsRowNumber, 9].Value = loc.PostalCode;
+                    locationsWorksheet.Cells[locationsRowNumber, 10].Value = loc.City;
+                    locationsWorksheet.Cells[locationsRowNumber, 11].Value = loc.District;
+                    locationsWorksheet.Cells[locationsRowNumber, 12].Value = loc.County;
+                    locationsWorksheet.Cells[locationsRowNumber, 13].Value = loc.State;
+                    locationsWorksheet.Cells[locationsRowNumber, 14].Value = loc.Country;
+                    locationsWorksheet.Cells[locationsRowNumber, 15].Value = loc.Notes;
+                    locationsWorksheet.Cells[locationsRowNumber, 16].Value = loc.Tags;
+                    locationsRowNumber++;
+                }
 
                 // Vocabulary sheet
 
