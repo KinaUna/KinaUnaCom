@@ -8,6 +8,7 @@ using KinaUnaWeb.Services;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace KinaUnaWeb.Controllers
 {
@@ -37,6 +38,7 @@ namespace KinaUnaWeb.Controllers
             }
 
             Progeny prog = await _progenyHttpClient.GetProgeny(progenyId);
+            Dictionary<string, string> userEmails = new Dictionary<string, string>();
 
             var stream = new System.IO.MemoryStream();
             using (ExcelPackage package = new ExcelPackage(stream))
@@ -142,7 +144,7 @@ namespace KinaUnaWeb.Controllers
 
                 photosWorksheet.Cells[1, 1].Value = Constants.AppName + " Photo DATA for " + prog.NickName;
 
-                using (ExcelRange titleRange = photosWorksheet.Cells[1, 1, 1, 12])
+                using (ExcelRange titleRange = photosWorksheet.Cells[1, 1, 1, 13])
                 {
                     titleRange.Merge = true;
                     titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
@@ -163,8 +165,9 @@ namespace KinaUnaWeb.Controllers
                 photosWorksheet.Cells[2, 10].Value = "Longitude";
                 photosWorksheet.Cells[2, 11].Value = "Latitude";
                 photosWorksheet.Cells[2, 12].Value = "Altitude";
+                photosWorksheet.Cells[2, 13].Value = "Added By";
 
-                using (ExcelRange headerRange = photosWorksheet.Cells[2, 1, 2, 12])
+                using (ExcelRange headerRange = photosWorksheet.Cells[2, 1, 2, 13])
                 {
                     headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
                     headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
@@ -187,6 +190,7 @@ namespace KinaUnaWeb.Controllers
                 photosWorksheet.Column(10).Width = 20;
                 photosWorksheet.Column(11).Width = 20;
                 photosWorksheet.Column(12).Width = 20;
+                photosWorksheet.Column(13).Width = 30;
 
                 List<Picture> photoList = await _mediaHttpClient.GetPictureList(progenyId, 0, userTimeZone);
                 int photoRowNumber = 3;
@@ -204,6 +208,20 @@ namespace KinaUnaWeb.Controllers
                     photosWorksheet.Cells[photoRowNumber, 10].Value = pic.Longtitude;
                     photosWorksheet.Cells[photoRowNumber, 11].Value = pic.Latitude;
                     photosWorksheet.Cells[photoRowNumber, 12].Value = pic.Altitude;
+                    if (!string.IsNullOrEmpty(pic.Author))
+                    {
+                        if (userEmails.ContainsKey(pic.Author))
+                        {
+                            photosWorksheet.Cells[photoRowNumber, 13].Value = userEmails[pic.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(pic.Author);
+                            photosWorksheet.Cells[photoRowNumber, 13].Value = author.UserEmail;
+                            userEmails.Add(pic.Author, author.UserEmail);
+                        }
+                    }
+
                     photoRowNumber++;
                 }
 
@@ -212,7 +230,7 @@ namespace KinaUnaWeb.Controllers
 
                 videosWorksheet.Cells[1, 1].Value = Constants.AppName + " Video DATA for " + prog.NickName;
 
-                using (ExcelRange titleRange = videosWorksheet.Cells[1, 1, 1, 12])
+                using (ExcelRange titleRange = videosWorksheet.Cells[1, 1, 1, 13])
                 {
                     titleRange.Merge = true;
                     titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
@@ -233,8 +251,9 @@ namespace KinaUnaWeb.Controllers
                 videosWorksheet.Cells[2, 10].Value = "Longitude";
                 videosWorksheet.Cells[2, 11].Value = "Latitude";
                 videosWorksheet.Cells[2, 12].Value = "Altitude";
+                videosWorksheet.Cells[2, 13].Value = "Added By";
 
-                using (ExcelRange headerRange = videosWorksheet.Cells[2, 1, 2, 12])
+                using (ExcelRange headerRange = videosWorksheet.Cells[2, 1, 2, 13])
                 {
                     headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
                     headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
@@ -257,6 +276,7 @@ namespace KinaUnaWeb.Controllers
                 videosWorksheet.Column(10).Width = 20;
                 videosWorksheet.Column(11).Width = 20;
                 videosWorksheet.Column(12).Width = 20;
+                videosWorksheet.Column(13).Width = 30;
 
                 List<Video> videoList = await _mediaHttpClient.GetVideoList(progenyId, 0, userTimeZone);
                 int videoRowNumber = 3;
@@ -274,6 +294,20 @@ namespace KinaUnaWeb.Controllers
                     videosWorksheet.Cells[videoRowNumber, 10].Value = vid.Longtitude;
                     videosWorksheet.Cells[videoRowNumber, 11].Value = vid.Latitude;
                     videosWorksheet.Cells[videoRowNumber, 12].Value = vid.Altitude;
+                    if (!string.IsNullOrEmpty(vid.Author))
+                    {
+                        if (userEmails.ContainsKey(vid.Author))
+                        {
+                            videosWorksheet.Cells[videoRowNumber, 13].Value = userEmails[vid.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(vid.Author);
+                            videosWorksheet.Cells[videoRowNumber, 13].Value = author.UserEmail;
+                            userEmails.Add(vid.Author, author.UserEmail);
+                        }
+                    }
+
                     videoRowNumber++;
                 }
 
@@ -282,7 +316,7 @@ namespace KinaUnaWeb.Controllers
 
                 calendarWorksheet.Cells[1, 1].Value = Constants.AppName + " Calendar DATA for " + prog.NickName;
 
-                using (ExcelRange titleRange = calendarWorksheet.Cells[1, 1, 1, 9])
+                using (ExcelRange titleRange = calendarWorksheet.Cells[1, 1, 1, 10])
                 {
                     titleRange.Merge = true;
                     titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
@@ -300,9 +334,10 @@ namespace KinaUnaWeb.Controllers
                 calendarWorksheet.Cells[2, 7].Value = "Location";
                 calendarWorksheet.Cells[2, 8].Value = "Context";
                 calendarWorksheet.Cells[2, 9].Value = "All Day";
+                calendarWorksheet.Cells[2, 10].Value = "Added By";
 
 
-                using (ExcelRange headerRange = calendarWorksheet.Cells[2, 1, 2, 9])
+                using (ExcelRange headerRange = calendarWorksheet.Cells[2, 1, 2, 10])
                 {
                     headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
                     headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
@@ -322,6 +357,7 @@ namespace KinaUnaWeb.Controllers
                 calendarWorksheet.Column(7).Width = 25;
                 calendarWorksheet.Column(8).Width = 15;
                 calendarWorksheet.Column(9).Width = 10;
+                calendarWorksheet.Column(10).Width = 30;
 
                 List<CalendarItem> calendarItems = await _progenyHttpClient.GetCalendarList(progenyId, 0);
                 int calendarRowNumber = 3;
@@ -346,6 +382,20 @@ namespace KinaUnaWeb.Controllers
                     calendarWorksheet.Cells[calendarRowNumber, 7].Value = evt.Location;
                     calendarWorksheet.Cells[calendarRowNumber, 8].Value = evt.Context;
                     calendarWorksheet.Cells[calendarRowNumber, 9].Value = evt.AllDay;
+                    if (!string.IsNullOrEmpty(evt.Author))
+                    {
+                        if (userEmails.ContainsKey(evt.Author))
+                        {
+                            calendarWorksheet.Cells[calendarRowNumber, 10].Value = userEmails[evt.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(evt.Author);
+                            calendarWorksheet.Cells[calendarRowNumber, 10].Value = author.UserEmail;
+                            userEmails.Add(evt.Author, author.UserEmail);
+                        }
+                    }
+
                     calendarRowNumber++;
                 }
 
@@ -354,7 +404,7 @@ namespace KinaUnaWeb.Controllers
 
                 locationsWorksheet.Cells[1, 1].Value = Constants.AppName + " Location DATA for " + prog.NickName;
 
-                using (ExcelRange titleRange = locationsWorksheet.Cells[1, 1, 1, 16])
+                using (ExcelRange titleRange = locationsWorksheet.Cells[1, 1, 1, 17])
                 {
                     titleRange.Merge = true;
                     titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
@@ -379,8 +429,9 @@ namespace KinaUnaWeb.Controllers
                 locationsWorksheet.Cells[2, 14].Value = "Country";
                 locationsWorksheet.Cells[2, 15].Value = "Notes";
                 locationsWorksheet.Cells[2, 16].Value = "Tags";
+                locationsWorksheet.Cells[2, 17].Value = "Added By";
 
-                using (ExcelRange headerRange = locationsWorksheet.Cells[2, 1, 2, 16])
+                using (ExcelRange headerRange = locationsWorksheet.Cells[2, 1, 2, 17])
                 {
                     headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
                     headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
@@ -407,6 +458,7 @@ namespace KinaUnaWeb.Controllers
                 locationsWorksheet.Column(14).Width = 25;
                 locationsWorksheet.Column(15).Width = 35;
                 locationsWorksheet.Column(16).Width = 25;
+                locationsWorksheet.Column(17).Width = 30;
 
                 List<Location> locationItems = await _progenyHttpClient.GetLocationsList(progenyId, 0);
                 int locationsRowNumber = 3;
@@ -431,6 +483,20 @@ namespace KinaUnaWeb.Controllers
                     locationsWorksheet.Cells[locationsRowNumber, 14].Value = loc.Country;
                     locationsWorksheet.Cells[locationsRowNumber, 15].Value = loc.Notes;
                     locationsWorksheet.Cells[locationsRowNumber, 16].Value = loc.Tags;
+                    if (!string.IsNullOrEmpty(loc.Author))
+                    {
+                        if (userEmails.ContainsKey(loc.Author))
+                        {
+                            locationsWorksheet.Cells[locationsRowNumber, 17].Value = userEmails[loc.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(loc.Author);
+                            locationsWorksheet.Cells[locationsRowNumber, 17].Value = author.UserEmail;
+                            userEmails.Add(loc.Author, author.UserEmail);
+                        }
+                    }
+
                     locationsRowNumber++;
                 }
 
@@ -439,7 +505,7 @@ namespace KinaUnaWeb.Controllers
 
                 vocabularyWorksheet.Cells[1, 1].Value = Constants.AppName + " Vocabulary DATA for " + prog.NickName;
 
-                using (ExcelRange titleRange = vocabularyWorksheet.Cells[1, 1, 1, 7])
+                using (ExcelRange titleRange = vocabularyWorksheet.Cells[1, 1, 1, 8])
                 {
                     titleRange.Merge = true;
                     titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
@@ -455,8 +521,9 @@ namespace KinaUnaWeb.Controllers
                 vocabularyWorksheet.Cells[2, 5].Value = "Sounds Like";
                 vocabularyWorksheet.Cells[2, 6].Value = "Language";
                 vocabularyWorksheet.Cells[2, 7].Value = "Description";
+                vocabularyWorksheet.Cells[2, 8].Value = "Added By";
 
-                using (ExcelRange headerRange = vocabularyWorksheet.Cells[2, 1, 2, 7])
+                using (ExcelRange headerRange = vocabularyWorksheet.Cells[2, 1, 2, 8])
                 {
                     headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
                     headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
@@ -474,6 +541,7 @@ namespace KinaUnaWeb.Controllers
                 vocabularyWorksheet.Column(5).Width = 30;
                 vocabularyWorksheet.Column(6).Width = 20;
                 vocabularyWorksheet.Column(7).Width = 45;
+                vocabularyWorksheet.Column(8).Width = 40;
 
                 List<VocabularyItem> vocabularyItems = await _progenyHttpClient.GetWordsList(progenyId, 0);
                 int vocabularyRowNumber = 3;
@@ -489,6 +557,20 @@ namespace KinaUnaWeb.Controllers
                     vocabularyWorksheet.Cells[vocabularyRowNumber, 5].Value = voc.SoundsLike;
                     vocabularyWorksheet.Cells[vocabularyRowNumber, 6].Value = voc.Language;
                     vocabularyWorksheet.Cells[vocabularyRowNumber, 7].Value = voc.Description;
+                    if (!string.IsNullOrEmpty(voc.Author))
+                    {
+                        if (userEmails.ContainsKey(voc.Author))
+                        {
+                            vocabularyWorksheet.Cells[vocabularyRowNumber, 8].Value = userEmails[voc.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(voc.Author);
+                            vocabularyWorksheet.Cells[vocabularyRowNumber, 8].Value = author.UserEmail;
+                            userEmails.Add(voc.Author, author.UserEmail);
+                        }
+                    }
+
                     vocabularyRowNumber++;
                 }
 
@@ -549,8 +631,20 @@ namespace KinaUnaWeb.Controllers
                     skillsWorksheet.Cells[skillsRowNumber, 5].Value = skill.Description;
                     skillsWorksheet.Cells[skillsRowNumber, 6].Value = skill.Category;
                     skillsWorksheet.Cells[skillsRowNumber, 7].Value = skill.SkillAddedDate.ToString("dd-MMM-yyyy");
-                    UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(skill.Author);
-                    skillsWorksheet.Cells[skillsRowNumber, 8].Value = author.UserEmail;
+                    if (!string.IsNullOrEmpty(skill.Author))
+                    {
+                        if (userEmails.ContainsKey(skill.Author))
+                        {
+                            skillsWorksheet.Cells[skillsRowNumber, 8].Value = userEmails[skill.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(skill.Author);
+                            skillsWorksheet.Cells[skillsRowNumber, 8].Value = author.UserEmail;
+                            userEmails.Add(skill.Author, author.UserEmail);
+                        }
+                    }
+
                     skillsRowNumber++;
                 }
 
