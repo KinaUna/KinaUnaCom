@@ -120,7 +120,7 @@ namespace KinaUnaWeb.Controllers
                     Picture picture = new Picture();
                     picture.ProgenyId = model.ProgenyId;
                     picture.AccessLevel = model.AccessLevel;
-                    picture.Author = model.Author;
+                    picture.Author = userinfo.UserId;
                     picture.Owners = model.Owners;
                     picture.TimeZone = userinfo.Timezone;
                     using (var stream = formFile.OpenReadStream())
