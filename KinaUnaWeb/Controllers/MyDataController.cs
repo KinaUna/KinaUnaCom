@@ -277,7 +277,6 @@ namespace KinaUnaWeb.Controllers
                     videoRowNumber++;
                 }
 
-
                 // Calendar sheet
                 ExcelWorksheet calendarWorksheet = package.Workbook.Worksheets.Add("Calendar");
 
@@ -494,6 +493,66 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Skills sheet
+                ExcelWorksheet skillsWorksheet = package.Workbook.Worksheets.Add("Skills");
+
+                skillsWorksheet.Cells[1, 1].Value = Constants.AppName + " Skill DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = skillsWorksheet.Cells[1, 1, 1, 8])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                skillsWorksheet.Cells[2, 1].Value = "Skill ID";
+                skillsWorksheet.Cells[2, 2].Value = "Access Level";
+                skillsWorksheet.Cells[2, 3].Value = "First Observation";
+                skillsWorksheet.Cells[2, 4].Value = "Name";
+                skillsWorksheet.Cells[2, 5].Value = "Description";
+                skillsWorksheet.Cells[2, 6].Value = "Category";
+                skillsWorksheet.Cells[2, 7].Value = "Added Date";
+                skillsWorksheet.Cells[2, 8].Value = "Added By";
+
+                using (ExcelRange headerRange = skillsWorksheet.Cells[2, 1, 2, 8])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                skillsWorksheet.Row(1).Height = 45.0;
+                skillsWorksheet.Row(2).Style.Font.Bold = true;
+                skillsWorksheet.Row(2).Height = 30.0;
+                skillsWorksheet.Column(1).Width = 10;
+                skillsWorksheet.Column(2).Width = 10;
+                skillsWorksheet.Column(3).Width = 20;
+                skillsWorksheet.Column(4).Width = 30;
+                skillsWorksheet.Column(5).Width = 40;
+                skillsWorksheet.Column(6).Width = 30;
+                skillsWorksheet.Column(7).Width = 20;
+                skillsWorksheet.Column(8).Width = 45;
+
+                List<Skill> skillItems = await _progenyHttpClient.GetSkillsList(progenyId, 0);
+                int skillsRowNumber = 3;
+                foreach (Skill skill in skillItems)
+                {
+                    skillsWorksheet.Cells[skillsRowNumber, 1].Value = skill.SkillId;
+                    skillsWorksheet.Cells[skillsRowNumber, 2].Value = skill.AccessLevel;
+                    if (skill.SkillFirstObservation.HasValue)
+                    {
+                        skillsWorksheet.Cells[skillsRowNumber, 3].Value = skill.SkillFirstObservation.Value.ToString("dd-MMM-yyyy");
+                    }
+                    skillsWorksheet.Cells[skillsRowNumber, 4].Value = skill.Name;
+                    skillsWorksheet.Cells[skillsRowNumber, 5].Value = skill.Description;
+                    skillsWorksheet.Cells[skillsRowNumber, 6].Value = skill.Category;
+                    skillsWorksheet.Cells[skillsRowNumber, 7].Value = skill.SkillAddedDate.ToString("dd-MMM-yyyy");
+                    UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(skill.Author);
+                    skillsWorksheet.Cells[skillsRowNumber, 8].Value = author.UserEmail;
+                    skillsRowNumber++;
+                }
 
                 // Friends sheet
 
@@ -504,6 +563,7 @@ namespace KinaUnaWeb.Controllers
                 // Contacts sheet
 
                 // Vaccinations sheet
+
 
                 package.Save();
             }
