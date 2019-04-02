@@ -649,7 +649,87 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Friends sheet
+                ExcelWorksheet friendsWorksheet = package.Workbook.Worksheets.Add("Friends");
 
+                friendsWorksheet.Cells[1, 1].Value = Constants.AppName + " Friends DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = friendsWorksheet.Cells[1, 1, 1, 10])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                friendsWorksheet.Cells[2, 1].Value = "Friend ID";
+                friendsWorksheet.Cells[2, 2].Value = "Access Level";
+                friendsWorksheet.Cells[2, 3].Value = "Friends Since";
+                friendsWorksheet.Cells[2, 4].Value = "Name";
+                friendsWorksheet.Cells[2, 5].Value = "Description";
+                friendsWorksheet.Cells[2, 6].Value = "Type";
+                friendsWorksheet.Cells[2, 7].Value = "Context";
+                friendsWorksheet.Cells[2, 8].Value = "Notes";
+                friendsWorksheet.Cells[2, 9].Value = "Tags";
+                friendsWorksheet.Cells[2, 10].Value = "Date Added";
+                friendsWorksheet.Cells[2, 11].Value = "Added By";
+
+                using (ExcelRange headerRange = friendsWorksheet.Cells[2, 1, 2, 10])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                friendsWorksheet.Row(1).Height = 45.0;
+                friendsWorksheet.Row(2).Style.Font.Bold = true;
+                friendsWorksheet.Row(2).Height = 30.0;
+                friendsWorksheet.Column(1).Width = 10;
+                friendsWorksheet.Column(2).Width = 10;
+                friendsWorksheet.Column(3).Width = 20;
+                friendsWorksheet.Column(4).Width = 30;
+                friendsWorksheet.Column(5).Width = 40;
+                friendsWorksheet.Column(6).Width = 30;
+                friendsWorksheet.Column(7).Width = 20;
+                friendsWorksheet.Column(8).Width = 45;
+                friendsWorksheet.Column(9).Width = 45;
+                friendsWorksheet.Column(10).Width = 20;
+                friendsWorksheet.Column(11).Width = 45;
+
+                List<Friend> friendsList = await _progenyHttpClient.GetFriendsList(progenyId, 0);
+                int friendsRowNumber = 3;
+                foreach (Friend friend in friendsList)
+                {
+                    friendsWorksheet.Cells[friendsRowNumber, 1].Value = friend.FriendId;
+                    friendsWorksheet.Cells[friendsRowNumber, 2].Value = friend.AccessLevel;
+                    if (friend.FriendSince.HasValue)
+                    {
+                        friendsWorksheet.Cells[friendsRowNumber, 3].Value = friend.FriendSince.Value.ToString("dd-MMM-yyyy");
+                    }
+                    friendsWorksheet.Cells[friendsRowNumber, 4].Value = friend.Name;
+                    friendsWorksheet.Cells[friendsRowNumber, 5].Value = friend.Description;
+                    friendsWorksheet.Cells[friendsRowNumber, 6].Value = friend.Type;
+                    friendsWorksheet.Cells[friendsRowNumber, 7].Value = friend.Context;
+                    friendsWorksheet.Cells[friendsRowNumber, 8].Value = friend.Notes;
+                    friendsWorksheet.Cells[friendsRowNumber, 9].Value = friend.Tags;
+                    friendsWorksheet.Cells[friendsRowNumber, 10].Value = friend.FriendAddedDate.ToString("dd-MMM-yyyy");
+                    if (!string.IsNullOrEmpty(friend.Author))
+                    {
+                        if (userEmails.ContainsKey(friend.Author))
+                        {
+                            friendsWorksheet.Cells[friendsRowNumber, 11].Value = userEmails[friend.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(friend.Author);
+                            friendsWorksheet.Cells[friendsRowNumber, 11].Value = author.UserEmail;
+                            userEmails.Add(friend.Author, author.UserEmail);
+                        }
+                    }
+
+                    friendsRowNumber++;
+                }
                 // Measurements sheet
 
                 // Sleep sheet
