@@ -882,6 +882,127 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Contacts sheet
+                ExcelWorksheet contactsWorksheet = package.Workbook.Worksheets.Add("Contacts");
+
+                contactsWorksheet.Cells[1, 1].Value = Constants.AppName + " Contacts DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = contactsWorksheet.Cells[1, 1, 1, 23])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                contactsWorksheet.Cells[2, 1].Value = "Contact ID";
+                contactsWorksheet.Cells[2, 2].Value = "Access Level";
+                contactsWorksheet.Cells[2, 3].Value = "First Name";
+                contactsWorksheet.Cells[2, 4].Value = "Middle Name";
+                contactsWorksheet.Cells[2, 5].Value = "Last Name";
+                contactsWorksheet.Cells[2, 6].Value = "Display Name";
+                contactsWorksheet.Cells[2, 7].Value = "Address Line 1";
+                contactsWorksheet.Cells[2, 8].Value = "Address Line 2";
+                contactsWorksheet.Cells[2, 9].Value = "City";
+                contactsWorksheet.Cells[2, 10].Value = "State/Region";
+                contactsWorksheet.Cells[2, 11].Value = "Postal Code";
+                contactsWorksheet.Cells[2, 12].Value = "Country";
+                contactsWorksheet.Cells[2, 13].Value = "Email 1";
+                contactsWorksheet.Cells[2, 14].Value = "Email 2";
+                contactsWorksheet.Cells[2, 15].Value = "Phone Number";
+                contactsWorksheet.Cells[2, 16].Value = "Mobile Number";
+                contactsWorksheet.Cells[2, 17].Value = "Picture Link";
+                contactsWorksheet.Cells[2, 18].Value = "Website";
+                contactsWorksheet.Cells[2, 19].Value = "Context";
+                contactsWorksheet.Cells[2, 20].Value = "Notes";
+                contactsWorksheet.Cells[2, 21].Value = "Tags";
+                contactsWorksheet.Cells[2, 22].Value = "Added Date";
+                contactsWorksheet.Cells[2, 23].Value = "Added By";
+
+                using (ExcelRange headerRange = contactsWorksheet.Cells[2, 1, 2, 23])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                contactsWorksheet.Row(1).Height = 45.0;
+                contactsWorksheet.Row(2).Style.Font.Bold = true;
+                contactsWorksheet.Row(2).Height = 30.0;
+                contactsWorksheet.Column(1).Width = 10;
+                contactsWorksheet.Column(2).Width = 10;
+                contactsWorksheet.Column(3).Width = 25;
+                contactsWorksheet.Column(4).Width = 25;
+                contactsWorksheet.Column(5).Width = 25;
+                contactsWorksheet.Column(6).Width = 25;
+                contactsWorksheet.Column(7).Width = 25;
+                contactsWorksheet.Column(8).Width = 25;
+                contactsWorksheet.Column(9).Width = 25;
+                contactsWorksheet.Column(10).Width = 25;
+                contactsWorksheet.Column(11).Width = 15;
+                contactsWorksheet.Column(12).Width = 25;
+                contactsWorksheet.Column(13).Width = 35;
+                contactsWorksheet.Column(14).Width = 35;
+                contactsWorksheet.Column(15).Width = 20;
+                contactsWorksheet.Column(16).Width = 20;
+                contactsWorksheet.Column(17).Width = 20;
+                contactsWorksheet.Column(18).Width = 20;
+                contactsWorksheet.Column(19).Width = 25;
+                contactsWorksheet.Column(20).Width = 45;
+                contactsWorksheet.Column(21).Width = 45;
+                contactsWorksheet.Column(22).Width = 20;
+                contactsWorksheet.Column(23).Width = 45;
+
+                List<Contact> contactsList = await _progenyHttpClient.GetContactsList(progenyId, 0);
+                int contactsRowNumber = 3;
+                foreach (Contact contact in contactsList)
+                {
+                    contactsWorksheet.Cells[contactsRowNumber, 1].Value = contact.ContactId;
+                    contactsWorksheet.Cells[contactsRowNumber, 2].Value = contact.AccessLevel;
+                    contactsWorksheet.Cells[contactsRowNumber, 3].Value = contact.FirstName;
+                    contactsWorksheet.Cells[contactsRowNumber, 4].Value = contact.MiddleName;
+                    contactsWorksheet.Cells[contactsRowNumber, 5].Value = contact.LastName;
+                    contactsWorksheet.Cells[contactsRowNumber, 6].Value = contact.DisplayName;
+                    if (contact.AddressIdNumber.HasValue)
+                    {
+                        Address addr = await _progenyHttpClient.GetAddress(contact.AddressIdNumber.Value);
+                        contactsWorksheet.Cells[contactsRowNumber, 7].Value = addr.AddressLine1;
+                        contactsWorksheet.Cells[contactsRowNumber, 8].Value = addr.AddressLine2;
+                        contactsWorksheet.Cells[contactsRowNumber, 9].Value = addr.City;
+                        contactsWorksheet.Cells[contactsRowNumber, 10].Value = addr.State;
+                        contactsWorksheet.Cells[contactsRowNumber, 11].Value = addr.PostalCode;
+                        contactsWorksheet.Cells[contactsRowNumber, 12].Value = addr.Country;
+                    }
+                    contactsWorksheet.Cells[contactsRowNumber, 13].Value = contact.Email1;
+                    contactsWorksheet.Cells[contactsRowNumber, 14].Value = contact.Email2;
+                    contactsWorksheet.Cells[contactsRowNumber, 15].Value = contact.PhoneNumber;
+                    contactsWorksheet.Cells[contactsRowNumber, 16].Value = contact.MobileNumber;
+                    contactsWorksheet.Cells[contactsRowNumber, 17].Value = contact.PictureLink;
+                    contactsWorksheet.Cells[contactsRowNumber, 18].Value = contact.Website;
+                    contactsWorksheet.Cells[contactsRowNumber, 19].Value = contact.Context;
+                    contactsWorksheet.Cells[contactsRowNumber, 20].Value = contact.Notes;
+                    contactsWorksheet.Cells[contactsRowNumber, 21].Value = contact.Tags;
+                    if (contact.DateAdded.HasValue)
+                    {
+                        contactsWorksheet.Cells[contactsRowNumber, 22].Value = contact.DateAdded.Value.ToString("dd-MMM-YYYY");
+                    }
+                    if (!string.IsNullOrEmpty(contact.Author))
+                    {
+                        if (userEmails.ContainsKey(contact.Author))
+                        {
+                            contactsWorksheet.Cells[contactsRowNumber, 23].Value = userEmails[contact.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(contact.Author);
+                            contactsWorksheet.Cells[contactsRowNumber, 23].Value = author.UserEmail;
+                            userEmails.Add(contact.Author, author.UserEmail);
+                        }
+                    }
+
+                    contactsRowNumber++;
+                }
 
                 // Vaccinations sheet
 
