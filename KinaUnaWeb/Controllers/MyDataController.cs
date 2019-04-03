@@ -730,7 +730,84 @@ namespace KinaUnaWeb.Controllers
 
                     friendsRowNumber++;
                 }
+
                 // Measurements sheet
+                ExcelWorksheet measurementsWorksheet = package.Workbook.Worksheets.Add("Measurements");
+
+                measurementsWorksheet.Cells[1, 1].Value = Constants.AppName + " Measurements DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = measurementsWorksheet.Cells[1, 1, 1, 10])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                measurementsWorksheet.Cells[2, 1].Value = "Measurement ID";
+                measurementsWorksheet.Cells[2, 2].Value = "Access Level";
+                measurementsWorksheet.Cells[2, 3].Value = "Date";
+                measurementsWorksheet.Cells[2, 4].Value = "Height";
+                measurementsWorksheet.Cells[2, 5].Value = "Weight";
+                measurementsWorksheet.Cells[2, 6].Value = "Circumference";
+                measurementsWorksheet.Cells[2, 7].Value = "Hair Color";
+                measurementsWorksheet.Cells[2, 8].Value = "Eye Color";
+                measurementsWorksheet.Cells[2, 9].Value = "Date Added";
+                measurementsWorksheet.Cells[2, 10].Value = "Added By";
+
+                using (ExcelRange headerRange = measurementsWorksheet.Cells[2, 1, 2, 10])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                measurementsWorksheet.Row(1).Height = 45.0;
+                measurementsWorksheet.Row(2).Style.Font.Bold = true;
+                measurementsWorksheet.Row(2).Height = 30.0;
+                measurementsWorksheet.Column(1).Width = 10;
+                measurementsWorksheet.Column(2).Width = 10;
+                measurementsWorksheet.Column(3).Width = 20;
+                measurementsWorksheet.Column(4).Width = 30;
+                measurementsWorksheet.Column(5).Width = 40;
+                measurementsWorksheet.Column(6).Width = 30;
+                measurementsWorksheet.Column(7).Width = 20;
+                measurementsWorksheet.Column(8).Width = 45;
+                measurementsWorksheet.Column(9).Width = 45;
+                measurementsWorksheet.Column(10).Width = 20;
+                measurementsWorksheet.Column(11).Width = 45;
+
+                List<Measurement> measurementsList = await _progenyHttpClient.GetMeasurementsList(progenyId, 0);
+                int measurementsRowNumber = 3;
+                foreach (Measurement measurement in measurementsList)
+                {
+                    measurementsWorksheet.Cells[measurementsRowNumber, 1].Value = measurement.MeasurementId;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 2].Value = measurement.AccessLevel;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 3].Value = measurement.Date.ToString("dd-MMM-yyyy");
+                    measurementsWorksheet.Cells[measurementsRowNumber, 4].Value = measurement.Height;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 5].Value = measurement.Weight;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 6].Value = measurement.Circumference;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 7].Value = measurement.HairColor;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 8].Value = measurement.EyeColor;
+                    measurementsWorksheet.Cells[measurementsRowNumber, 9].Value = measurement.CreatedDate.ToString("dd-MMM-yyyy");
+                    if (!string.IsNullOrEmpty(measurement.Author))
+                    {
+                        if (userEmails.ContainsKey(measurement.Author))
+                        {
+                            measurementsWorksheet.Cells[measurementsRowNumber, 10].Value = userEmails[measurement.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(measurement.Author);
+                            measurementsWorksheet.Cells[measurementsRowNumber, 10].Value = author.UserEmail;
+                            userEmails.Add(measurement.Author, author.UserEmail);
+                        }
+                    }
+
+                    measurementsRowNumber++;
+                }
 
                 // Sleep sheet
 
