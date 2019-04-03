@@ -1005,7 +1005,72 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Vaccinations sheet
+                ExcelWorksheet vaccinationsWorksheet = package.Workbook.Worksheets.Add("Vaccinations");
 
+                vaccinationsWorksheet.Cells[1, 1].Value = Constants.AppName + " Vaccination DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = vaccinationsWorksheet.Cells[1, 1, 1, 7])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                vaccinationsWorksheet.Cells[2, 1].Value = "Vaccination ID";
+                vaccinationsWorksheet.Cells[2, 2].Value = "Access Level";
+                vaccinationsWorksheet.Cells[2, 3].Value = "Date";
+                vaccinationsWorksheet.Cells[2, 4].Value = "Name";
+                vaccinationsWorksheet.Cells[2, 5].Value = "Description";
+                vaccinationsWorksheet.Cells[2, 6].Value = "Notes";
+                vaccinationsWorksheet.Cells[2, 7].Value = "Added By";
+
+                using (ExcelRange headerRange = vaccinationsWorksheet.Cells[2, 1, 2, 7])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                vaccinationsWorksheet.Row(1).Height = 45.0;
+                vaccinationsWorksheet.Row(2).Style.Font.Bold = true;
+                vaccinationsWorksheet.Row(2).Height = 30.0;
+                vaccinationsWorksheet.Column(1).Width = 10;
+                vaccinationsWorksheet.Column(2).Width = 10;
+                vaccinationsWorksheet.Column(3).Width = 20;
+                vaccinationsWorksheet.Column(4).Width = 50;
+                vaccinationsWorksheet.Column(5).Width = 50;
+                vaccinationsWorksheet.Column(6).Width = 50;
+                vaccinationsWorksheet.Column(7).Width = 45;
+
+                List<Vaccination> vaccinationsList = await _progenyHttpClient.GetVaccinationsList(progenyId, 0);
+                int vaccinationsRowNumber = 3;
+                foreach (Vaccination vaccination in vaccinationsList)
+                {
+                    vaccinationsWorksheet.Cells[vaccinationsRowNumber, 1].Value = vaccination.VaccinationId;
+                    vaccinationsWorksheet.Cells[vaccinationsRowNumber, 2].Value = vaccination.AccessLevel;
+                    vaccinationsWorksheet.Cells[vaccinationsRowNumber, 3].Value = vaccination.VaccinationDate.ToString("dd-MMM-yyyy");
+                    vaccinationsWorksheet.Cells[vaccinationsRowNumber, 4].Value = vaccination.VaccinationName;
+                    vaccinationsWorksheet.Cells[vaccinationsRowNumber, 5].Value = vaccination.VaccinationDescription;
+                    vaccinationsWorksheet.Cells[vaccinationsRowNumber, 6].Value = vaccination.Notes;
+                    if (!string.IsNullOrEmpty(vaccination.Author))
+                    {
+                        if (userEmails.ContainsKey(vaccination.Author))
+                        {
+                            vaccinationsWorksheet.Cells[vaccinationsRowNumber, 7].Value = userEmails[vaccination.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(vaccination.Author);
+                            vaccinationsWorksheet.Cells[vaccinationsRowNumber, 7].Value = author.UserEmail;
+                            userEmails.Add(vaccination.Author, author.UserEmail);
+                        }
+                    }
+
+                    vaccinationsRowNumber++;
+                }
 
                 package.Save();
             }
