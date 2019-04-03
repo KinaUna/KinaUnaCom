@@ -770,14 +770,13 @@ namespace KinaUnaWeb.Controllers
                 measurementsWorksheet.Column(1).Width = 10;
                 measurementsWorksheet.Column(2).Width = 10;
                 measurementsWorksheet.Column(3).Width = 20;
-                measurementsWorksheet.Column(4).Width = 30;
-                measurementsWorksheet.Column(5).Width = 40;
-                measurementsWorksheet.Column(6).Width = 30;
-                measurementsWorksheet.Column(7).Width = 20;
-                measurementsWorksheet.Column(8).Width = 45;
-                measurementsWorksheet.Column(9).Width = 45;
-                measurementsWorksheet.Column(10).Width = 20;
-                measurementsWorksheet.Column(11).Width = 45;
+                measurementsWorksheet.Column(4).Width = 20;
+                measurementsWorksheet.Column(5).Width = 20;
+                measurementsWorksheet.Column(6).Width = 20;
+                measurementsWorksheet.Column(7).Width = 35;
+                measurementsWorksheet.Column(8).Width = 35;
+                measurementsWorksheet.Column(9).Width = 20;
+                measurementsWorksheet.Column(10).Width = 45;
 
                 List<Measurement> measurementsList = await _progenyHttpClient.GetMeasurementsList(progenyId, 0);
                 int measurementsRowNumber = 3;
@@ -810,6 +809,77 @@ namespace KinaUnaWeb.Controllers
                 }
 
                 // Sleep sheet
+                ExcelWorksheet sleepWorksheet = package.Workbook.Worksheets.Add("Sleep");
+
+                sleepWorksheet.Cells[1, 1].Value = Constants.AppName + " Sleep DATA for " + prog.NickName;
+
+                using (ExcelRange titleRange = sleepWorksheet.Cells[1, 1, 1, 8])
+                {
+                    titleRange.Merge = true;
+                    titleRange.Style.Font.SetFromFont(new Font("Arial", 28, FontStyle.Bold));
+                    titleRange.Style.Font.Color.SetColor(Color.White);
+                    titleRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    titleRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(75, 0, 100));
+                }
+
+                sleepWorksheet.Cells[2, 1].Value = "Sleep ID";
+                sleepWorksheet.Cells[2, 2].Value = "Access Level";
+                sleepWorksheet.Cells[2, 3].Value = "Start";
+                sleepWorksheet.Cells[2, 4].Value = "End";
+                sleepWorksheet.Cells[2, 5].Value = "Rating";
+                sleepWorksheet.Cells[2, 6].Value = "Notes";
+                sleepWorksheet.Cells[2, 7].Value = "Date Added";
+                sleepWorksheet.Cells[2, 8].Value = "Added By";
+
+                using (ExcelRange headerRange = sleepWorksheet.Cells[2, 1, 2, 8])
+                {
+                    headerRange.Style.Font.SetFromFont(new Font("Arial", 11, FontStyle.Bold));
+                    headerRange.Style.Font.Color.SetColor(Color.DarkBlue);
+                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.MediumPurple);
+                }
+
+                sleepWorksheet.Row(1).Height = 45.0;
+                sleepWorksheet.Row(2).Style.Font.Bold = true;
+                sleepWorksheet.Row(2).Height = 30.0;
+                sleepWorksheet.Column(1).Width = 10;
+                sleepWorksheet.Column(2).Width = 10;
+                sleepWorksheet.Column(3).Width = 25;
+                sleepWorksheet.Column(4).Width = 25;
+                sleepWorksheet.Column(5).Width = 15;
+                sleepWorksheet.Column(6).Width = 45;
+                sleepWorksheet.Column(7).Width = 20;
+                sleepWorksheet.Column(8).Width = 45;
+
+                List<Sleep> sleepList = await _progenyHttpClient.GetSleepList(progenyId, 0);
+                int sleepRowNumber = 3;
+                foreach (Sleep sleep in sleepList)
+                {
+                    sleepWorksheet.Cells[sleepRowNumber, 1].Value = sleep.SleepId;
+                    sleepWorksheet.Cells[sleepRowNumber, 2].Value = sleep.AccessLevel;
+                    sleep.SleepStart = TimeZoneInfo.ConvertTimeFromUtc(sleep.SleepStart, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+                    sleepWorksheet.Cells[sleepRowNumber, 3].Value = sleep.SleepStart.ToString("dd-MMM-yyyy HH:mm");
+                    sleep.SleepEnd = TimeZoneInfo.ConvertTimeFromUtc(sleep.SleepEnd, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+                    sleepWorksheet.Cells[sleepRowNumber, 4].Value = sleep.SleepEnd.ToString("dd-MMM-yyyy HH:mm");
+                    sleepWorksheet.Cells[sleepRowNumber, 5].Value = sleep.SleepRating;
+                    sleepWorksheet.Cells[sleepRowNumber, 6].Value = sleep.SleepNotes;
+                    sleepWorksheet.Cells[sleepRowNumber, 7].Value = sleep.CreatedDate.ToString("dd-MMM-yyyy");
+                    if (!string.IsNullOrEmpty(sleep.Author))
+                    {
+                        if (userEmails.ContainsKey(sleep.Author))
+                        {
+                            sleepWorksheet.Cells[sleepRowNumber, 8].Value = userEmails[sleep.Author];
+                        }
+                        else
+                        {
+                            UserInfo author = await _progenyHttpClient.GetUserInfoByUserId(sleep.Author);
+                            sleepWorksheet.Cells[sleepRowNumber, 8].Value = author.UserEmail;
+                            userEmails.Add(sleep.Author, author.UserEmail);
+                        }
+                    }
+
+                    sleepRowNumber++;
+                }
 
                 // Contacts sheet
 
