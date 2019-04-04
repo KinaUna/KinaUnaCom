@@ -40,6 +40,11 @@ namespace KinaUnaProgenyApi
                         sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                     }));
 
+            services.AddDistributedRedisCache(option =>
+                option.Configuration = Configuration["RedisConnection"]);
+
+            services.AddSingleton<IDataService, DataService>();
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddAuthorization(authorizationOptions =>
