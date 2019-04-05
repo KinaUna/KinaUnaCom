@@ -43,7 +43,7 @@ namespace KinaUnaProgenyApi
             services.AddDistributedRedisCache(option =>
                 option.Configuration = Configuration["RedisConnection"]);
 
-            services.AddSingleton<IDataService, DataService>();
+            services.AddScoped<IDataService, DataService>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
