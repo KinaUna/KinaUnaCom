@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +21,23 @@ namespace KinaUnaProgenyApi.Services
             _context = context;
             _cache = cache;
             _cacheOptions.SetAbsoluteExpiration(new System.TimeSpan(0, 5, 0)); // Expire after 5 minutes.
+        }
+
+        public List<Progeny> GetProgenyUserIsAdmin(string email)
+        {
+            List<Progeny> progenyList;
+            string cachedProgenyList = _cache.GetString("progenywhereadmin" + email);
+            if (!string.IsNullOrEmpty(cachedProgenyList))
+            {
+                progenyList = JsonConvert.DeserializeObject<List<Progeny>>(cachedProgenyList);
+            }
+            else
+            {
+                progenyList = _context.ProgenyDb.AsNoTracking().Where(p => p.Admins.Contains(email)).ToList();
+                _cache.SetString("progenywhereadmin" + email, JsonConvert.SerializeObject(progenyList), _cacheOptions);
+            }
+
+            return progenyList;
         }
 
         public Progeny GetProgeny(int id)
@@ -74,7 +93,7 @@ namespace KinaUnaProgenyApi.Services
         public UserInfo GetUserInfoByEmail(string userEmail)
         {
             UserInfo userinfo;
-            string cachedUserInfo = _cache.GetString("userinfo" + userEmail);
+            string cachedUserInfo = _cache.GetString("userinfobymail" + userEmail);
             if (!string.IsNullOrEmpty(cachedUserInfo))
             {
                 userinfo = JsonConvert.DeserializeObject<UserInfo>(cachedUserInfo);
@@ -82,7 +101,41 @@ namespace KinaUnaProgenyApi.Services
             else
             {
                 userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
-                _cache.SetString("userinfo" + userEmail, JsonConvert.SerializeObject(userinfo), _cacheOptions);
+                _cache.SetString("userinfobymail" + userEmail, JsonConvert.SerializeObject(userinfo), _cacheOptions);
+            }
+
+            return userinfo;
+        }
+
+        public UserInfo GetUserInfoById(int id)
+        {
+            UserInfo userinfo;
+            string cachedUserInfo = _cache.GetString("userinfobyid" + id);
+            if (!string.IsNullOrEmpty(cachedUserInfo))
+            {
+                userinfo = JsonConvert.DeserializeObject<UserInfo>(cachedUserInfo);
+            }
+            else
+            {
+                userinfo = _context.UserInfoDb.SingleOrDefault(u => u.Id == id);
+                _cache.SetString("userinfobyid" + id, JsonConvert.SerializeObject(userinfo), _cacheOptions);
+            }
+
+            return userinfo;
+        }
+
+        public UserInfo GetUserInfoByUserId(string id)
+        {
+            UserInfo userinfo;
+            string cachedUserInfo = _cache.GetString("userinfobyuserid" + id);
+            if (!string.IsNullOrEmpty(cachedUserInfo))
+            {
+                userinfo = JsonConvert.DeserializeObject<UserInfo>(cachedUserInfo);
+            }
+            else
+            {
+                userinfo = _context.UserInfoDb.SingleOrDefault(u => u.UserId.ToUpper() == id.ToUpper());
+                _cache.SetString("userinfobyuserid" + id, JsonConvert.SerializeObject(userinfo), _cacheOptions);
             }
 
             return userinfo;
@@ -240,6 +293,295 @@ namespace KinaUnaProgenyApi.Services
             }
 
             return friendsList;
+        }
+
+        public Location GetLocation(int id)
+        {
+            Location location;
+            string cachedLocation = _cache.GetString("location" + id);
+            if (!string.IsNullOrEmpty(cachedLocation))
+            {
+                location = JsonConvert.DeserializeObject<Location>(cachedLocation);
+            }
+            else
+            {
+                location = _context.LocationsDb.AsNoTracking().SingleOrDefault(l => l.LocationId == id);
+                _cache.SetString("location" + id, JsonConvert.SerializeObject(location), _cacheOptions);
+            }
+
+            return location;
+        }
+
+        public List<Location> GetLocationsList(int progenyId)
+        {
+            List<Location> locationsList;
+            string cachedLocationsList = _cache.GetString("locationslist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedLocationsList))
+            {
+                locationsList = JsonConvert.DeserializeObject<List<Location>>(cachedLocationsList);
+            }
+            else
+            {
+                locationsList = _context.LocationsDb.AsNoTracking().Where(l => l.ProgenyId == progenyId).ToList();
+                _cache.SetString("locationslist" + progenyId, JsonConvert.SerializeObject(locationsList), _cacheOptions);
+            }
+
+            return locationsList;
+        }
+
+        public TimeLineItem GetTimeLineItem(int id)
+        {
+            TimeLineItem timeLineItem;
+            string cachedTimeLineItem = _cache.GetString("timelineitem" + id);
+            if (!string.IsNullOrEmpty(cachedTimeLineItem))
+            {
+                timeLineItem = JsonConvert.DeserializeObject<TimeLineItem>(cachedTimeLineItem);
+            }
+            else
+            {
+                timeLineItem = _context.TimeLineDb.AsNoTracking().SingleOrDefault(t => t.TimeLineId == id);
+                _cache.SetString("timelineitem" + id, JsonConvert.SerializeObject(timeLineItem), _cacheOptions);
+            }
+
+            return timeLineItem;
+        }
+
+        public TimeLineItem GetTimeLineItemByItemId(string itemId, int itemType)
+        {
+            TimeLineItem timeLineItem;
+            string cachedTimeLineItem = _cache.GetString("timelineitembyid" + itemId + itemType);
+            if (!string.IsNullOrEmpty(cachedTimeLineItem))
+            {
+                timeLineItem = JsonConvert.DeserializeObject<TimeLineItem>(cachedTimeLineItem);
+            }
+            else
+            {
+                timeLineItem = _context.TimeLineDb.SingleOrDefault(t => t.ItemId == itemId && t.ItemType == itemType);
+                _cache.SetString("timelineitembyid" + itemId + itemType, JsonConvert.SerializeObject(timeLineItem), _cacheOptions);
+            }
+
+            return timeLineItem;
+        }
+
+        public List<TimeLineItem> GetTimeLineList(int progenyId)
+        {
+            List<TimeLineItem> timeLineList;
+            string cachedTimeLineList = _cache.GetString("timelinelist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedTimeLineList))
+            {
+                timeLineList = JsonConvert.DeserializeObject<List<TimeLineItem>>(cachedTimeLineList);
+            }
+            else
+            {
+                timeLineList = _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == progenyId).ToList();
+                _cache.SetString("timelinelist" + progenyId, JsonConvert.SerializeObject(timeLineList), _cacheOptions);
+            }
+
+            return timeLineList;
+        }
+
+        public Measurement GetMeasurement(int id)
+        {
+            Measurement measurement;
+            string cachedMeasurement = _cache.GetString("measurement" + id);
+            if (!string.IsNullOrEmpty(cachedMeasurement))
+            {
+                measurement = JsonConvert.DeserializeObject<Measurement>(cachedMeasurement);
+            }
+            else
+            {
+                measurement = _context.MeasurementsDb.AsNoTracking().SingleOrDefault(m => m.MeasurementId == id);
+                _cache.SetString("measurement" + id, JsonConvert.SerializeObject(measurement), _cacheOptions);
+            }
+
+            return measurement;
+        }
+
+        public List<Measurement> GetMeasurementsList(int progenyId)
+        {
+            List<Measurement> measurementsList;
+            string cachedMeasurementsList = _cache.GetString("measurementslist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedMeasurementsList))
+            {
+                measurementsList = JsonConvert.DeserializeObject<List<Measurement>>(cachedMeasurementsList);
+            }
+            else
+            {
+                measurementsList = _context.MeasurementsDb.AsNoTracking().Where(m => m.ProgenyId == progenyId).ToList();
+                _cache.SetString("measurementslist" + progenyId, JsonConvert.SerializeObject(measurementsList), _cacheOptions);
+            }
+
+            return measurementsList;
+        }
+
+        public Note GetNote(int id)
+        {
+            Note note;
+            string cachedNote = _cache.GetString("note" + id);
+            if (!string.IsNullOrEmpty(cachedNote))
+            {
+                note = JsonConvert.DeserializeObject<Note>(cachedNote);
+            }
+            else
+            {
+                note = _context.NotesDb.AsNoTracking().SingleOrDefault(n => n.NoteId == id);
+                _cache.SetString("note" + id, JsonConvert.SerializeObject(note), _cacheOptions);
+            }
+
+            return note;
+        }
+
+        public List<Note> GetNotesList(int progenyId)
+        {
+            List<Note> notesList;
+            string cachedNotesList = _cache.GetString("noteslist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedNotesList))
+            {
+                notesList = JsonConvert.DeserializeObject<List<Note>>(cachedNotesList);
+            }
+            else
+            {
+                notesList = _context.NotesDb.AsNoTracking().Where(n => n.ProgenyId == progenyId).ToList();
+                _cache.SetString("noteslist" + progenyId, JsonConvert.SerializeObject(notesList), _cacheOptions);
+            }
+
+            return notesList;
+        }
+
+        public Skill GetSkill(int id)
+        {
+            Skill skill;
+            string cachedSkill = _cache.GetString("skill" + id);
+            if (!string.IsNullOrEmpty(cachedSkill))
+            {
+                skill = JsonConvert.DeserializeObject<Skill>(cachedSkill);
+            }
+            else
+            {
+                skill = _context.SkillsDb.AsNoTracking().SingleOrDefault(s => s.SkillId == id);
+                _cache.SetString("skill" + id, JsonConvert.SerializeObject(skill), _cacheOptions);
+            }
+
+            return skill;
+        }
+
+        public List<Skill> GetSkillsList(int progenyId)
+        {
+            List<Skill> skillsList;
+            string cachedSkillsList = _cache.GetString("skillslist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedSkillsList))
+            {
+                skillsList = JsonConvert.DeserializeObject<List<Skill>>(cachedSkillsList);
+            }
+            else
+            {
+                skillsList = _context.SkillsDb.AsNoTracking().Where(s => s.ProgenyId == progenyId).ToList();
+                _cache.SetString("skillslist" + progenyId, JsonConvert.SerializeObject(skillsList), _cacheOptions);
+            }
+
+            return skillsList;
+        }
+
+        public Sleep GetSleep(int id)
+        {
+            Sleep sleep;
+            string cachedSleep = _cache.GetString("sleep" + id);
+            if (!string.IsNullOrEmpty(cachedSleep))
+            {
+                sleep = JsonConvert.DeserializeObject<Sleep>(cachedSleep);
+            }
+            else
+            {
+                sleep = _context.SleepDb.AsNoTracking().SingleOrDefault(s => s.SleepId == id);
+                _cache.SetString("sleep" + id, JsonConvert.SerializeObject(sleep), _cacheOptions);
+            }
+
+            return sleep;
+        }
+
+        public List<Sleep> GetSleepList(int progenyId)
+        {
+            List<Sleep> sleepList;
+            string cachedSleepList = _cache.GetString("sleeplist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedSleepList))
+            {
+                sleepList = JsonConvert.DeserializeObject<List<Sleep>>(cachedSleepList);
+            }
+            else
+            {
+                sleepList = _context.SleepDb.AsNoTracking().Where(s => s.ProgenyId == progenyId).ToList();
+                _cache.SetString("sleeplist" + progenyId, JsonConvert.SerializeObject(sleepList), _cacheOptions);
+            }
+
+            return sleepList;
+        }
+
+        public Vaccination GetVaccination(int id)
+        {
+            Vaccination vaccination;
+            string cachedVaccination = _cache.GetString("vaccination" + id);
+            if (!string.IsNullOrEmpty(cachedVaccination))
+            {
+                vaccination = JsonConvert.DeserializeObject<Vaccination>(cachedVaccination);
+            }
+            else
+            {
+                vaccination = _context.VaccinationsDb.AsNoTracking().SingleOrDefault(v => v.VaccinationId == id);
+                _cache.SetString("vaccination" + id, JsonConvert.SerializeObject(vaccination), _cacheOptions);
+            }
+
+            return vaccination;
+        }
+
+        public List<Vaccination> GetVaccinationsList(int progenyId)
+        {
+            List<Vaccination> vaccinationsList;
+            string cachedVaccinationsList = _cache.GetString("vaccinationslist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedVaccinationsList))
+            {
+                vaccinationsList = JsonConvert.DeserializeObject<List<Vaccination>>(cachedVaccinationsList);
+            }
+            else
+            {
+                vaccinationsList = _context.VaccinationsDb.AsNoTracking().Where(v => v.ProgenyId == progenyId).ToList();
+                _cache.SetString("vaccinationslist" + progenyId, JsonConvert.SerializeObject(vaccinationsList), _cacheOptions);
+            }
+
+            return vaccinationsList;
+        }
+
+        public VocabularyItem GetVocabularyItem(int id)
+        {
+            VocabularyItem vocabularyItem;
+            string cachedVocabularyItem = _cache.GetString("vocabularyitem" + id);
+            if (!string.IsNullOrEmpty(cachedVocabularyItem))
+            {
+                vocabularyItem = JsonConvert.DeserializeObject<VocabularyItem>(cachedVocabularyItem);
+            }
+            else
+            {
+                vocabularyItem = _context.VocabularyDb.AsNoTracking().SingleOrDefault(v => v.WordId == id);
+                _cache.SetString("vocabularyitem" + id, JsonConvert.SerializeObject(vocabularyItem), _cacheOptions);
+            }
+
+            return vocabularyItem;
+        }
+
+        public List<VocabularyItem> GetVocabularyList(int progenyId)
+        {
+            List<VocabularyItem> vocabularyList;
+            string cachedVocabularyList = _cache.GetString("vocabularylist" + progenyId);
+            if (!string.IsNullOrEmpty(cachedVocabularyList))
+            {
+                vocabularyList = JsonConvert.DeserializeObject<List<VocabularyItem>>(cachedVocabularyList);
+            }
+            else
+            {
+                vocabularyList = _context.VocabularyDb.AsNoTracking().Where(v => v.ProgenyId == progenyId).ToList();
+                _cache.SetString("vocabularylist" + progenyId, JsonConvert.SerializeObject(vocabularyList), _cacheOptions);
+            }
+
+            return vocabularyList;
         }
     }
 }
