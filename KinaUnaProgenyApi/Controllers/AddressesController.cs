@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
+using KinaUnaProgenyApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,18 +15,18 @@ namespace KinaUnaProgenyApi.Controllers
     public class AddressesController : ControllerBase
     {
         private readonly ProgenyDbContext _context;
-
-        public AddressesController(ProgenyDbContext context)
+        private readonly IDataService _dataService;
+        public AddressesController(ProgenyDbContext context, IDataService dataService)
         {
             _context = context;
-
+            _dataService = dataService;
         }
 
         // GET api/addresses/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAddressItem(int id)
         {
-            Address result = await _context.AddressDb.AsNoTracking().SingleOrDefaultAsync(n => n.AddressId == id);
+            Address result = _dataService.GetAddressItem(id); // await _context.AddressDb.AsNoTracking().SingleOrDefaultAsync(n => n.AddressId == id);
             return Ok(result);
         }
 
