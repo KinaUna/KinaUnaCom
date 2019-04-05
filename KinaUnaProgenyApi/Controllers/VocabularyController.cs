@@ -6,6 +6,7 @@ using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
+using KinaUnaProgenyApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,24 +20,25 @@ namespace KinaUnaProgenyApi.Controllers
     public class VocabularyController : ControllerBase
     {
         private readonly ProgenyDbContext _context;
+        private readonly IDataService _dataService;
 
-        public VocabularyController(ProgenyDbContext context)
+        public VocabularyController(ProgenyDbContext context, IDataService dataService)
         {
             _context = context;
-
+            _dataService = dataService;
         }
 
         // GET api/vocabulary/progeny/[id]
         [HttpGet]
         [Route("[action]/{id}")]
-        public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
+        public IActionResult Progeny(int id, [FromQuery] int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
-                u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = _dataService.GetProgenyUserAccessForUser(id, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
             if (userAccess != null || id == Constants.DefaultChildId)
             {
-                List<VocabularyItem> wordList = await _context.VocabularyDb.AsNoTracking().Where(w => w.ProgenyId == id && w.AccessLevel >= accessLevel).ToListAsync();
+                List<VocabularyItem> wordList = _dataService.GetVocabularyList(id); // await _context.VocabularyDb.AsNoTracking().Where(w => w.ProgenyId == id && w.AccessLevel >= accessLevel).ToListAsync();
+                wordList = wordList.Where(w => w.AccessLevel >= accessLevel).ToList();
                 if (wordList.Any())
                 {
                     return Ok(wordList);
@@ -49,13 +51,12 @@ namespace KinaUnaProgenyApi.Controllers
 
         // GET api/vocabulary/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetVocabularyItem(int id)
+        public IActionResult GetVocabularyItem(int id)
         {
-            VocabularyItem result = await _context.VocabularyDb.AsNoTracking().SingleOrDefaultAsync(w => w.WordId == id);
+            VocabularyItem result = _dataService.GetVocabularyItem(id); // await _context.VocabularyDb.AsNoTracking().SingleOrDefaultAsync(w => w.WordId == id);
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
-                u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
             if (userAccess != null || id == Constants.DefaultChildId)
             {
                 return Ok(result);
@@ -216,15 +217,14 @@ namespace KinaUnaProgenyApi.Controllers
         }
 
         [HttpGet("[action]/{id}")]
-        public async Task<IActionResult> GetItemMobile(int id)
+        public IActionResult GetItemMobile(int id)
         {
-            VocabularyItem result = await _context.VocabularyDb.AsNoTracking().SingleOrDefaultAsync(w => w.WordId == id);
+            VocabularyItem result = _dataService.GetVocabularyItem(id); // await _context.VocabularyDb.AsNoTracking().SingleOrDefaultAsync(w => w.WordId == id);
 
             if (result != null)
             {
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
-                    u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+                UserAccess userAccess = _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
                 if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
                 {
