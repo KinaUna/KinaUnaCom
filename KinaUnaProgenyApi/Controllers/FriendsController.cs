@@ -22,24 +22,26 @@ namespace KinaUnaProgenyApi.Controllers
     {
         private readonly ProgenyDbContext _context;
         private readonly ImageStore _imageStore;
+        private readonly IDataService _dataService;
 
-        public FriendsController(ProgenyDbContext context, ImageStore imageStore)
+        public FriendsController(ProgenyDbContext context, ImageStore imageStore, IDataService dataService)
         {
             _context = context;
             _imageStore = imageStore;
+            _dataService = dataService;
         }
 
         // GET api/friends/progeny/[id]
         [HttpGet]
         [Route("[action]/{id}")]
-        public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
+        public IActionResult Progeny(int id, [FromQuery] int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
-                u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = _dataService.GetProgenyUserAccessForUser(id, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
             if (userAccess != null || id == Constants.DefaultChildId)
             {
-                List<Friend> friendsList = await _context.FriendsDb.AsNoTracking().Where(f => f.ProgenyId == id && f.AccessLevel >= accessLevel).ToListAsync();
+                List<Friend> friendsList = _dataService.GetFriendsList(id); // await _context.FriendsDb.AsNoTracking().Where(f => f.ProgenyId == id && f.AccessLevel >= accessLevel).ToListAsync();
+                friendsList = friendsList.Where(f => f.AccessLevel >= accessLevel).ToList();
                 if (friendsList.Any())
                 {
                     return Ok(friendsList);
@@ -52,17 +54,16 @@ namespace KinaUnaProgenyApi.Controllers
 
         // GET api/friends/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFriendItem(int id)
+        public IActionResult GetFriendItem(int id)
         {
-            Friend result = await _context.FriendsDb.AsNoTracking().SingleOrDefaultAsync(f => f.FriendId == id);
+            Friend result = _dataService.GetFriend(id); // await _context.FriendsDb.AsNoTracking().SingleOrDefaultAsync(f => f.FriendId == id);
             if (result == null)
             {
                 return NotFound();
             }
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
-                u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
             if (userAccess != null || id == Constants.DefaultChildId)
             {
                 return Ok(result);
@@ -238,15 +239,14 @@ namespace KinaUnaProgenyApi.Controllers
         }
 
         [HttpGet("[action]/{id}")]
-        public async Task<IActionResult> GetFriendMobile(int id)
+        public IActionResult GetFriendMobile(int id)
         {
-            Friend result = await _context.FriendsDb.AsNoTracking().SingleOrDefaultAsync(f => f.FriendId == id);
+            Friend result = _dataService.GetFriend(id); // await _context.FriendsDb.AsNoTracking().SingleOrDefaultAsync(f => f.FriendId == id);
 
             if (result != null)
             {
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = _context.UserAccessDb.AsNoTracking().SingleOrDefault(u =>
-                    u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+                UserAccess userAccess = _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
                 if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
                 {

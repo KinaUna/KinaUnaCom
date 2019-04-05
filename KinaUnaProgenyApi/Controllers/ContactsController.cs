@@ -53,7 +53,7 @@ namespace KinaUnaProgenyApi.Controllers
 
         // GET api/contacts/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetContactItem(int id)
+        public IActionResult GetContactItem(int id)
         {
             Contact result = _dataService.GetContact(id); // await _context.ContactsDb.AsNoTracking().SingleOrDefaultAsync(c => c.ContactId == id);
 
@@ -316,7 +316,7 @@ namespace KinaUnaProgenyApi.Controllers
 
         [HttpGet]
         [Route("[action]/{id}/{accessLevel}")]
-        public async Task<IActionResult> ProgenyMobile(int id, int accessLevel = 5)
+        public IActionResult ProgenyMobile(int id, int accessLevel = 5)
         {
             List<Contact> contactsList = _dataService.GetContactsList(id); // await _context.ContactsDb.AsNoTracking().Where(c => c.ProgenyId == id && c.AccessLevel >= accessLevel).ToListAsync();
             contactsList = contactsList.Where(c => c.AccessLevel >= accessLevel).ToList();
