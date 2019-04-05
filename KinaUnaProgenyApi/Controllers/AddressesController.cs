@@ -24,7 +24,7 @@ namespace KinaUnaProgenyApi.Controllers
 
         // GET api/addresses/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetAddressItem(int id)
+        public IActionResult GetAddressItem(int id)
         {
             Address result = _dataService.GetAddressItem(id); // await _context.AddressDb.AsNoTracking().SingleOrDefaultAsync(n => n.AddressId == id);
             return Ok(result);
