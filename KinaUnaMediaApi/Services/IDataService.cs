@@ -18,7 +18,7 @@ namespace KinaUnaMediaApi.Services
         List<Video> SetVideosList(int progenyId);
         Comment GetComment(int commentId);
         Comment SetComment(int commentId);
-        void RemoveComment(int commentId, int commentThreadId, int progenyId);
+        void RemoveComment(int commentId, int commentThreadId);
         List<Comment> GetCommentsList(int commentThreadId);
         List<Comment> SetCommentsList(int commentThreadId);
         void RemoveCommentsList(int commentThreadId);

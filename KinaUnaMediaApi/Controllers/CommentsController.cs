@@ -105,6 +105,7 @@ namespace KinaUnaMediaApi.Controllers
 
                 _context.CommentsDb.Remove(comment);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveComment(comment.CommentId, comment.CommentThreadNumber);
                 return NoContent();
             }
             else

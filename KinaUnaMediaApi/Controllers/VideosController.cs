@@ -415,7 +415,7 @@ namespace KinaUnaMediaApi.Controllers
 
                     foreach (Comment deletedComment in comments)
                     {
-                        _dataService.RemoveComment(deletedComment.CommentId, deletedComment.CommentThreadNumber, video.ProgenyId);
+                        _dataService.RemoveComment(deletedComment.CommentId, deletedComment.CommentThreadNumber);
                     }
                 }
 

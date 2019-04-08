@@ -704,7 +704,7 @@ namespace KinaUnaMediaApi.Controllers
                     _context.SaveChanges();
                     foreach (Comment deletedComment in comments)
                     {
-                        _dataService.RemoveComment(deletedComment.CommentId, deletedComment.CommentThreadNumber, picture.ProgenyId);
+                        _dataService.RemoveComment(deletedComment.CommentId, deletedComment.CommentThreadNumber);
                     }
                 }
 

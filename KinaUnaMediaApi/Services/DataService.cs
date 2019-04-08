@@ -212,7 +212,7 @@ namespace KinaUnaMediaApi.Services
             return comment;
         }
 
-        public void RemoveComment(int commentId, int commentThreadId, int progenyId)
+        public void RemoveComment(int commentId, int commentThreadId)
         {
             _cache.Remove("comment" + commentId);
             SetCommentsList(commentThreadId);
@@ -234,8 +234,6 @@ namespace KinaUnaMediaApi.Services
                     SetVideosList(video.ProgenyId);
                 }
             }
-
-
         }
 
         public List<Comment> GetCommentsList(int commentThreadId)
