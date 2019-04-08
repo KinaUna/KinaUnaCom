@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
+using KinaUnaMediaApi.Services;
 
 namespace KinaUnaMediaApi.Controllers
 {
@@ -16,23 +17,26 @@ namespace KinaUnaMediaApi.Controllers
     public class CommentsController : ControllerBase
     {
         private readonly MediaDbContext _context;
+        private readonly IDataService _dataService;
 
-        public CommentsController(MediaDbContext context)
+        public CommentsController(MediaDbContext context, IDataService dataService)
         {
             _context = context;
+            _dataService = dataService;
         }
 
         // GET api/comments/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetComment(int id)
+        public IActionResult GetComment(int id)
         {
-            Comment result = await _context.CommentsDb.SingleOrDefaultAsync(c => c.CommentId == id);
+            Comment result = _dataService.GetComment(id); // await _context.CommentsDb.SingleOrDefaultAsync(c => c.CommentId == id);
             if (result != null)
             {
                 return Ok(result);
             }
-            
+
             return NotFound();
+
         }
 
         // POST api/comments
@@ -55,6 +59,7 @@ namespace KinaUnaMediaApi.Controllers
             _context.CommentThreadsDb.Update(cmntThread);
 
             await _context.SaveChangesAsync();
+            _dataService.SetComment(newComment.CommentId);
 
             return Ok(newComment);
         }
@@ -78,7 +83,7 @@ namespace KinaUnaMediaApi.Controllers
 
             _context.CommentsDb.Update(comment);
             await _context.SaveChangesAsync();
-
+            _dataService.SetComment(comment.CommentId);
             return Ok(comment);
         }
 
@@ -97,7 +102,7 @@ namespace KinaUnaMediaApi.Controllers
                     _context.CommentThreadsDb.Update(cmntThread);
                     await _context.SaveChangesAsync();
                 }
-                
+
                 _context.CommentsDb.Remove(comment);
                 await _context.SaveChangesAsync();
                 return NoContent();
@@ -108,6 +113,6 @@ namespace KinaUnaMediaApi.Controllers
             }
 
         }
-        
+
     }
 }
