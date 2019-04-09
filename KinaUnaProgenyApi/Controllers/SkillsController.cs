@@ -98,6 +98,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.SkillsDb.Add(skillItem);
             await _context.SaveChangesAsync();
+            _dataService.SetSkill(skillItem.SkillId);
 
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = skillItem.ProgenyId;
@@ -111,6 +112,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(skillItem);
         }
@@ -152,6 +154,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.SkillsDb.Update(skillItem);
             await _context.SaveChangesAsync();
+            _dataService.SetSkill(skillItem.SkillId);
 
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == skillItem.SkillId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Skill);
@@ -164,6 +167,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = skillItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
             return Ok(skillItem);
         }
@@ -197,10 +201,13 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 _context.SkillsDb.Remove(skillItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveSkill(skillItem.SkillId, skillItem.ProgenyId);
+
                 return NoContent();
             }
             else

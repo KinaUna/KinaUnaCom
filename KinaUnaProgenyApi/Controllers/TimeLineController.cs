@@ -140,6 +140,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.TimeLineDb.Add(timeLineItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(timeLineItem.TimeLineId);
 
             return Ok(timeLineItem);
         }
@@ -180,7 +181,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.TimeLineDb.Update(timeLineItem);
             await _context.SaveChangesAsync();
-
+            _dataService.SetTimeLineItem(timeLineItem.TimeLineId);
             return Ok(timeLineItem);
         }
 
@@ -209,6 +210,9 @@ namespace KinaUnaProgenyApi.Controllers
 
                 _context.TimeLineDb.Remove(timeLineItem);
                 await _context.SaveChangesAsync();
+
+                _dataService.RemoveTimeLineItem(timeLineItem.TimeLineId, timeLineItem.ItemType, timeLineItem.ProgenyId);
+
                 return NoContent();
             }
 

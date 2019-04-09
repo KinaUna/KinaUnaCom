@@ -114,6 +114,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.LocationsDb.Add(location);
             await _context.SaveChangesAsync();
+            _dataService.SetLocation(location.LocationId);
 
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = location.ProgenyId;
@@ -134,6 +135,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(location);
         }
@@ -185,7 +187,9 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.LocationsDb.Update(location);
             await _context.SaveChangesAsync();
+            _dataService.SetLocation(location.LocationId);
 
+            // Update Timeline.
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == location.LocationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Location);
             if (tItem != null)
@@ -197,6 +201,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = location.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(location);
@@ -240,6 +245,8 @@ namespace KinaUnaProgenyApi.Controllers
 
                 _context.LocationsDb.Remove(location);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveLocation(location.LocationId, location.ProgenyId);
+
                 return NoContent();
             }
 

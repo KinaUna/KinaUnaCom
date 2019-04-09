@@ -120,6 +120,8 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
+            _dataService.SetCalendarItem(calendarItem.EventId);
             return Ok(calendarItem);
         }
 
@@ -172,7 +174,9 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = calendarItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
+            _dataService.SetCalendarItem(calendarItem.EventId);
             return Ok(calendarItem);
         }
 
@@ -205,10 +209,12 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 _context.CalendarDb.Remove(calendarItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveCalendarItem(calendarItem.EventId, calendarItem.ProgenyId);
                 return NoContent();
             }
             else

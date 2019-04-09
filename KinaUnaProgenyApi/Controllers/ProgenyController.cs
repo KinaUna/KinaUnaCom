@@ -106,6 +106,8 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.ProgenyDb.Add(progeny);
             await _context.SaveChangesAsync();
+            _dataService.SetProgeny(progeny.Id);
+
             if (progeny.Admins.Contains(','))
             {
                 List<string> adminList = progeny.Admins.Split(',').ToList();
@@ -119,6 +121,9 @@ namespace KinaUnaProgenyApi.Controllers
                     {
                         _context.UserAccessDb.Add(ua);
                         await _context.SaveChangesAsync();
+                        _dataService.SetProgenyUserIsAdmin(ua.UserId);
+                        _dataService.SetProgenyUserAccessList(progeny.Id);
+                        _dataService.SetUsersUserAccessList(ua.UserId);
                     }
                 }
             }
@@ -132,6 +137,9 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.UserAccessDb.Add(ua);
                     await _context.SaveChangesAsync();
+                    _dataService.SetProgenyUserIsAdmin(ua.UserId);
+                    _dataService.SetProgenyUserAccessList(progeny.Id);
+                    _dataService.SetUsersUserAccessList(ua.UserId);
                 }
 
             }
@@ -167,6 +175,8 @@ namespace KinaUnaProgenyApi.Controllers
             _context.ProgenyDb.Update(progeny);
             await _context.SaveChangesAsync();
 
+            _dataService.SetProgeny(progeny.Id);
+
             return Ok(progeny);
         }
 
@@ -174,6 +184,7 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            // Todo: Implement confirmation mail to verify that all content really should be deleted.
             Progeny progeny = await _context.ProgenyDb.SingleOrDefaultAsync(p => p.Id == id);
             if (progeny != null)
             {
@@ -185,12 +196,40 @@ namespace KinaUnaProgenyApi.Controllers
                 }
 
                 // Todo: Delete content associated with progeny.
+                // Todo: Delete TimeLine
+                // Todo: Delete Pictures
+                // Todo: Delete Videos
+                // Todo: Delete Calendar
+                // Todo: Delete Locations
+                // Todo: Delete Vocabulary
+                // Todo: Delete Skills
+                // Todo: Delete Friends
+                // Todo: Delete Measurements
+                // Todo: Delete Sleep
+                // Todo: Delete Notes
+                // Todo: Delete Contacts
+                // Todo: Delete Vaccinations
+
                 if (!progeny.PictureLink.ToLower().StartsWith("http") && !String.IsNullOrEmpty(progeny.PictureLink))
                 {
                     await _imageStore.DeleteImage(progeny.PictureLink, "progeny");
                 }
+
+                List<UserAccess> userAccessList =
+                    _context.UserAccessDb.Where(ua => ua.ProgenyId == progeny.Id).ToList();
+                if (userAccessList.Any())
+                {
+                    foreach (UserAccess ua in userAccessList)
+                    {
+                        _context.UserAccessDb.Remove(ua);
+                        _context.SaveChanges();
+                        _dataService.RemoveUserAccess(ua.AccessId, ua.ProgenyId, ua.UserId);
+                    }
+                }
                 _context.ProgenyDb.Remove(progeny);
                 await _context.SaveChangesAsync();
+
+                _dataService.RemoveProgeny(id);
                 return NoContent();
             }
             else

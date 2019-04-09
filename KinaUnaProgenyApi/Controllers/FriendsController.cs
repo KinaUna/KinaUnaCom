@@ -109,7 +109,9 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.FriendsDb.Add(friendItem);
             await _context.SaveChangesAsync();
+            _dataService.SetFriend(friendItem.FriendId);
 
+            // Add item to Timeline.
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = friendItem.ProgenyId;
             tItem.AccessLevel = friendItem.AccessLevel;
@@ -129,6 +131,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(friendItem);
         }
@@ -175,6 +178,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.FriendsDb.Update(friendItem);
             await _context.SaveChangesAsync();
+            _dataService.SetFriend(friendItem.FriendId);
 
             // Update timeline
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
@@ -185,6 +189,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = friendItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(friendItem);
@@ -220,6 +225,7 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 // Remove picture
@@ -230,6 +236,7 @@ namespace KinaUnaProgenyApi.Controllers
 
                 _context.FriendsDb.Remove(friendItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveFriend(friendItem.FriendId, friendItem.ProgenyId);
                 return NoContent();
             }
             else

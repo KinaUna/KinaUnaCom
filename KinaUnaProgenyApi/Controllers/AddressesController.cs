@@ -44,6 +44,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.AddressDb.Add(addressItem);
             await _context.SaveChangesAsync();
+            _dataService.SetAddressItem(addressItem.AddressId);
 
             return Ok(addressItem);
         }
@@ -67,6 +68,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.AddressDb.Update(addressItem);
             await _context.SaveChangesAsync();
+            _dataService.SetAddressItem(addressItem.AddressId);
 
             return Ok(addressItem);
         }
@@ -80,6 +82,7 @@ namespace KinaUnaProgenyApi.Controllers
             {
                 _context.AddressDb.Remove(addressItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveAddressItem(id);
                 return NoContent();
             }
             else

@@ -119,6 +119,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.ContactsDb.Add(contactItem);
             await _context.SaveChangesAsync();
+            _dataService.SetContact(contactItem.ContactId);
 
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = contactItem.ProgenyId;
@@ -132,6 +133,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(contactItem);
         }
@@ -228,6 +230,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.ContactsDb.Update(contactItem);
             await _context.SaveChangesAsync();
+            _dataService.SetContact(contactItem.ContactId);
 
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == contactItem.ContactId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Contact);
@@ -237,6 +240,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = contactItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(contactItem);
@@ -271,12 +275,14 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 if (contactItem.AddressIdNumber != null)
                 {
                     Address address = await _context.AddressDb.SingleAsync(a => a.AddressId == contactItem.AddressIdNumber);
                     _context.AddressDb.Remove(address);
+                    _dataService.RemoveAddressItem(address.AddressId);
                 }
                 if (!contactItem.PictureLink.ToLower().StartsWith("http"))
                 {
@@ -285,6 +291,8 @@ namespace KinaUnaProgenyApi.Controllers
 
                 _context.ContactsDb.Remove(contactItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveContact(contactItem.ContactId, contactItem.ProgenyId);
+
                 return NoContent();
             }
 

@@ -98,6 +98,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.VaccinationsDb.Add(vaccinationItem);
             await _context.SaveChangesAsync();
+            _dataService.SetVaccination(vaccinationItem.VaccinationId);
 
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = vaccinationItem.ProgenyId;
@@ -111,6 +112,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(vaccinationItem);
         }
@@ -151,6 +153,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.VaccinationsDb.Update(vaccinationItem);
             await _context.SaveChangesAsync();
+            _dataService.SetVaccination(vaccinationItem.VaccinationId);
 
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == vaccinationItem.VaccinationId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vaccination);
@@ -160,6 +163,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = vaccinationItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(vaccinationItem);
@@ -194,10 +198,13 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 _context.VaccinationsDb.Remove(vaccinationItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveVaccination(vaccinationItem.VaccinationId, vaccinationItem.ProgenyId);
+
                 return NoContent();
             }
             else

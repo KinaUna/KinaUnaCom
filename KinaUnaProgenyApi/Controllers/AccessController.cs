@@ -114,6 +114,14 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.UserAccessDb.Add(userAccess);
             await _context.SaveChangesAsync();
+            if (userAccess.AccessLevel == (int)AccessLevel.Private)
+            {
+                _dataService.SetProgenyUserIsAdmin(userAccess.UserId);
+            }
+
+            _dataService.SetProgenyUserAccessList(userAccess.ProgenyId);
+            _dataService.SetUsersUserAccessList(userAccess.UserId);
+            _dataService.SetUserAccess(userAccess.AccessId);
 
             return CreatedAtAction(nameof(GetAccess), new { id = userAccess.AccessId });
         }
@@ -152,6 +160,15 @@ namespace KinaUnaProgenyApi.Controllers
             _context.UserAccessDb.Update(userAccess);
             await _context.SaveChangesAsync();
 
+            if (userAccess.AccessLevel == (int)AccessLevel.Private)
+            {
+                _dataService.SetProgenyUserIsAdmin(userAccess.UserId);
+            }
+
+            _dataService.SetProgenyUserAccessList(userAccess.ProgenyId);
+            _dataService.SetUsersUserAccessList(userAccess.UserId);
+            _dataService.SetUserAccess(userAccess.AccessId);
+
             return CreatedAtAction(nameof(GetAccess), new { id = userAccess.AccessId });
         }
 
@@ -181,6 +198,7 @@ namespace KinaUnaProgenyApi.Controllers
 
                 _context.UserAccessDb.Remove(userAccess);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveUserAccess(userAccess.AccessId, userAccess.ProgenyId, userAccess.UserId);
                 return NoContent();
             }
 

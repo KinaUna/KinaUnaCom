@@ -103,6 +103,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.SleepDb.Add(sleepItem);
             await _context.SaveChangesAsync();
+            _dataService.SetSleep(sleepItem.SleepId);
 
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = sleepItem.ProgenyId;
@@ -116,6 +117,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(sleepItem);
         }
@@ -158,6 +160,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.SleepDb.Update(sleepItem);
             await _context.SaveChangesAsync();
+            _dataService.SetSleep(sleepItem.SleepId);
 
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == sleepItem.SleepId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Sleep);
@@ -167,6 +170,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = sleepItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(sleepItem);
@@ -201,10 +205,12 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 _context.SleepDb.Remove(sleepItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveSleep(sleepItem.SleepId, sleepItem.ProgenyId);
                 return NoContent();
             }
             else

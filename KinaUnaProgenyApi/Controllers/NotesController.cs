@@ -97,7 +97,9 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.NotesDb.Add(noteItem);
             await _context.SaveChangesAsync();
+            _dataService.SetNote(noteItem.NoteId);
 
+            // Add to Timeline.
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = noteItem.ProgenyId;
             tItem.AccessLevel = noteItem.AccessLevel;
@@ -110,6 +112,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
 
             return Ok(noteItem);
         }
@@ -150,7 +153,9 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.NotesDb.Update(noteItem);
             await _context.SaveChangesAsync();
+            _dataService.SetNote(noteItem.NoteId);
 
+            // Update Timeline.
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == noteItem.NoteId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Note);
             if (tItem != null)
@@ -159,6 +164,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = noteItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(noteItem);
@@ -193,10 +199,13 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     _context.TimeLineDb.Remove(tItem);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 _context.NotesDb.Remove(noteItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveNote(noteItem.NoteId, noteItem.ProgenyId);
+
                 return NoContent();
             }
 

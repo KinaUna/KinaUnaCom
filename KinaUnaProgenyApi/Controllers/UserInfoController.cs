@@ -265,6 +265,7 @@ namespace KinaUnaProgenyApi.Controllers
                 }
             }
 
+            _dataService.SetUserInfoByEmail(userinfo.UserEmail);
             return Ok(userinfo);
         }
 
@@ -320,6 +321,8 @@ namespace KinaUnaProgenyApi.Controllers
             _context.UserInfoDb.Update(userinfo);
             await _context.SaveChangesAsync();
 
+            _dataService.SetUserInfoByEmail(userinfo.UserEmail);
+
             return Ok(userinfo);
         }
 
@@ -328,6 +331,7 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             UserInfo userinfo = await _context.UserInfoDb.SingleOrDefaultAsync(u => u.Id == id);
+
             if (userinfo != null)
             {
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
@@ -338,6 +342,8 @@ namespace KinaUnaProgenyApi.Controllers
 
                 _context.UserInfoDb.Remove(userinfo);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveUserInfoByEmail(userinfo.UserEmail, userinfo.UserId, userinfo.Id);
+
                 return NoContent();
             }
 

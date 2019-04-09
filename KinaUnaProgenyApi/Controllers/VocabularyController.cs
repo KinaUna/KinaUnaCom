@@ -99,6 +99,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.VocabularyDb.Add(vocabularyItem);
             await _context.SaveChangesAsync();
+            _dataService.SetVocabularyItem(vocabularyItem.WordId);
 
             TimeLineItem tItem = new TimeLineItem();
             tItem.ProgenyId = vocabularyItem.ProgenyId;
@@ -119,6 +120,8 @@ namespace KinaUnaProgenyApi.Controllers
 
             await _context.TimeLineDb.AddAsync(tItem);
             await _context.SaveChangesAsync();
+            _dataService.SetTimeLineItem(tItem.TimeLineId);
+
             return Ok(vocabularyItem);
         }
 
@@ -160,6 +163,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.VocabularyDb.Update(vocabularyItem);
             await _context.SaveChangesAsync();
+            _dataService.SetVocabularyItem(vocabularyItem.WordId);
 
             TimeLineItem tItem = await _context.TimeLineDb.SingleOrDefaultAsync(t =>
                 t.ItemId == vocabularyItem.WordId.ToString() && t.ItemType == (int)KinaUnaTypes.TimeLineType.Vocabulary);
@@ -172,6 +176,7 @@ namespace KinaUnaProgenyApi.Controllers
                 tItem.AccessLevel = vocabularyItem.AccessLevel;
                 _context.TimeLineDb.Update(tItem);
                 await _context.SaveChangesAsync();
+                _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
             return Ok(vocabularyItem);
@@ -205,11 +210,15 @@ namespace KinaUnaProgenyApi.Controllers
                 if (tItem != null)
                 {
                     _context.TimeLineDb.Remove(tItem);
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                     await _context.SaveChangesAsync();
+                    _dataService.RemoveTimeLineItem(tItem.TimeLineId, tItem.ItemType, tItem.ProgenyId);
                 }
 
                 _context.VocabularyDb.Remove(vocabularyItem);
                 await _context.SaveChangesAsync();
+                _dataService.RemoveVocabularyItem(vocabularyItem.WordId, vocabularyItem.ProgenyId);
+
                 return NoContent();
             }
 
