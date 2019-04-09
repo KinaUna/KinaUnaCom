@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
@@ -57,6 +56,7 @@ namespace KinaUnaMediaApi.Controllers
                 await _context.CommentThreadsDb.SingleOrDefaultAsync(c => c.CommentThreadId == model.CommentThreadNumber);
             cmntThread.CommentsCount = cmntThread.CommentsCount + 1;
             _context.CommentThreadsDb.Update(cmntThread);
+            _dataService.SetCommentsList(cmntThread.CommentThreadId);
 
             await _context.SaveChangesAsync();
             _dataService.SetComment(newComment.CommentId);
@@ -101,6 +101,7 @@ namespace KinaUnaMediaApi.Controllers
                     cmntThread.CommentsCount = cmntThread.CommentsCount - 1;
                     _context.CommentThreadsDb.Update(cmntThread);
                     await _context.SaveChangesAsync();
+                    _dataService.SetCommentsList(cmntThread.CommentThreadId);
                 }
 
                 _context.CommentsDb.Remove(comment);

@@ -63,10 +63,12 @@ namespace KinaUnaMediaApi.Services
         {
             Picture picture = _mediaContext.PicturesDb.AsNoTracking().SingleOrDefault(p => p.PictureId == id);
             _cache.SetString("picture" + id, JsonConvert.SerializeObject(picture), _cacheOptionsSliding);
+            if (picture != null)
+            {
+                SetPicturesList(picture.ProgenyId);
 
-            List<Picture> picturesList = SetPicturesList(picture.ProgenyId);
-
-            List<Comment> commentsList = SetCommentsList(picture.CommentThreadNumber);
+                SetCommentsList(picture.CommentThreadNumber);
+            }
 
             return picture;
         }
