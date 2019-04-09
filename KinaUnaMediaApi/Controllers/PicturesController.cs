@@ -60,7 +60,7 @@ namespace KinaUnaMediaApi.Controllers
             {
                 allItems = _dataService.GetPicturesList(progenyId); // await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToListAsync();
                 allItems = allItems
-                    .Where(p => p.AccessLevel >= accessLevel && p.Tags.ToUpper().Contains(tagFilter.ToUpper()))
+                    .Where(p => p.AccessLevel >= accessLevel && p.Tags != null && p.Tags.ToUpper().Contains(tagFilter.ToUpper()))
                     .OrderBy(p => p.PictureTime).ToList();
             }
             else
@@ -895,7 +895,7 @@ namespace KinaUnaMediaApi.Controllers
             if (tagFilter != "")
             {
                 allItems = _dataService.GetPicturesList(progenyId); // await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToListAsync();
-                allItems = allItems.Where(p => p.AccessLevel >= accessLevel && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToList();
+                allItems = allItems.Where(p => p.AccessLevel >= accessLevel && p.Tags != null && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToList();
             }
             else
             {
