@@ -37,6 +37,7 @@ More information can be found here: https://web.kinauna.com/Home/About
 - Azure App Service
 - Azure KeyVault
 - Azure Blob Storage
+- Azure Cache for Redis
 - Identity Server 4
 - Here.com Maps
 - WebPush
