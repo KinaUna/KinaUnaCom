@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,7 @@ namespace KinaUnaMediaApi.Services
         public UserAccess GetProgenyUserAccessForUser(int progenyId, string userEmail)
         {
             UserAccess userAccess;
-            string cachedUserAccess = _cache.GetString("progenyuseraccess" + progenyId + userEmail);
+            string cachedUserAccess = _cache.GetString(Constants.AppName + "progenyuseraccess" + progenyId + userEmail);
             if (!string.IsNullOrEmpty(cachedUserAccess))
             {
                 userAccess = JsonConvert.DeserializeObject<UserAccess>(cachedUserAccess);
@@ -36,7 +37,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 userAccess = _context.UserAccessDb.SingleOrDefault(u => u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
-                _cache.SetString("progenyuseraccess" + progenyId + userEmail, JsonConvert.SerializeObject(userAccess), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "progenyuseraccess" + progenyId + userEmail, JsonConvert.SerializeObject(userAccess), _cacheOptionsSliding);
             }
 
             return userAccess;
@@ -45,7 +46,7 @@ namespace KinaUnaMediaApi.Services
         public Picture GetPicture(int id)
         {
             Picture picture;
-            string cachedPicture = _cache.GetString("picture" + id);
+            string cachedPicture = _cache.GetString(Constants.AppName + "picture" + id);
             if (!string.IsNullOrEmpty(cachedPicture))
             {
                 picture = JsonConvert.DeserializeObject<Picture>(cachedPicture);
@@ -53,7 +54,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 picture = _mediaContext.PicturesDb.AsNoTracking().SingleOrDefault(p => p.PictureId == id);
-                _cache.SetString("picture" + id, JsonConvert.SerializeObject(picture), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "picture" + id, JsonConvert.SerializeObject(picture), _cacheOptionsSliding);
             }
 
             return picture;
@@ -62,7 +63,7 @@ namespace KinaUnaMediaApi.Services
         public Picture SetPicture(int id)
         {
             Picture picture = _mediaContext.PicturesDb.AsNoTracking().SingleOrDefault(p => p.PictureId == id);
-            _cache.SetString("picture" + id, JsonConvert.SerializeObject(picture), _cacheOptionsSliding);
+            _cache.SetString(Constants.AppName + "picture" + id, JsonConvert.SerializeObject(picture), _cacheOptionsSliding);
             if (picture != null)
             {
                 SetPicturesList(picture.ProgenyId);
@@ -75,7 +76,7 @@ namespace KinaUnaMediaApi.Services
 
         public void RemovePicture(int pictureId, int progenyId)
         {
-            _cache.Remove("picture" + pictureId);
+            _cache.Remove(Constants.AppName + "picture" + pictureId);
 
             List<Picture> picturesList = SetPicturesList(progenyId);
         }
@@ -83,7 +84,7 @@ namespace KinaUnaMediaApi.Services
         public List<Picture> GetPicturesList(int progenyId)
         {
             List<Picture> picturesList;
-            string cachedPicturesList = _cache.GetString("pictureslist" + progenyId);
+            string cachedPicturesList = _cache.GetString(Constants.AppName + "pictureslist" + progenyId);
             if (!string.IsNullOrEmpty(cachedPicturesList))
             {
                 picturesList = JsonConvert.DeserializeObject<List<Picture>>(cachedPicturesList);
@@ -91,7 +92,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 picturesList = _mediaContext.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == progenyId).ToList();
-                _cache.SetString("pictureslist" + progenyId, JsonConvert.SerializeObject(picturesList), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "pictureslist" + progenyId, JsonConvert.SerializeObject(picturesList), _cacheOptionsSliding);
             }
 
             return picturesList;
@@ -100,7 +101,7 @@ namespace KinaUnaMediaApi.Services
         public List<Picture> SetPicturesList(int progenyId)
         {
             List<Picture> picturesList = _mediaContext.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == progenyId).ToList();
-            _cache.SetString("pictureslist" + progenyId, JsonConvert.SerializeObject(picturesList), _cacheOptionsSliding);
+            _cache.SetString(Constants.AppName + "pictureslist" + progenyId, JsonConvert.SerializeObject(picturesList), _cacheOptionsSliding);
 
             return picturesList;
         }
@@ -108,7 +109,7 @@ namespace KinaUnaMediaApi.Services
         public Video GetVideo(int id)
         {
             Video video;
-            string cachedVideo = _cache.GetString("video" + id);
+            string cachedVideo = _cache.GetString(Constants.AppName + "video" + id);
             if (!string.IsNullOrEmpty(cachedVideo))
             {
                 video = JsonConvert.DeserializeObject<Video>(cachedVideo);
@@ -116,7 +117,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 video = _mediaContext.VideoDb.AsNoTracking().SingleOrDefault(v => v.VideoId == id);
-                _cache.SetString("video" + id, JsonConvert.SerializeObject(video), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "video" + id, JsonConvert.SerializeObject(video), _cacheOptionsSliding);
             }
 
             return video;
@@ -125,7 +126,7 @@ namespace KinaUnaMediaApi.Services
         public Video SetVideo(int id)
         {
             Video video = _mediaContext.VideoDb.AsNoTracking().SingleOrDefault(v => v.VideoId == id);
-            _cache.SetString("video" + id, JsonConvert.SerializeObject(video), _cacheOptionsSliding);
+            _cache.SetString(Constants.AppName + "video" + id, JsonConvert.SerializeObject(video), _cacheOptionsSliding);
             if (video != null)
             {
                 List<Video> videosList = SetVideosList(video.ProgenyId);
@@ -137,7 +138,7 @@ namespace KinaUnaMediaApi.Services
 
         public void RemoveVideo(int videoId, int progenyId)
         {
-            _cache.Remove("video" + videoId);
+            _cache.Remove(Constants.AppName + "video" + videoId);
 
             List<Video> videosList = SetVideosList(progenyId);
         }
@@ -145,7 +146,7 @@ namespace KinaUnaMediaApi.Services
         public List<Video> GetVideosList(int progenyId)
         {
             List<Video> videosList;
-            string cachedVideosList = _cache.GetString("videoslist" + progenyId);
+            string cachedVideosList = _cache.GetString(Constants.AppName + "videoslist" + progenyId);
             if (!string.IsNullOrEmpty(cachedVideosList))
             {
                 videosList = JsonConvert.DeserializeObject<List<Video>>(cachedVideosList);
@@ -153,7 +154,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 videosList = _mediaContext.VideoDb.AsNoTracking().Where(v => v.ProgenyId == progenyId).ToList();
-                _cache.SetString("videoslist" + progenyId, JsonConvert.SerializeObject(videosList), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "videoslist" + progenyId, JsonConvert.SerializeObject(videosList), _cacheOptionsSliding);
             }
 
             return videosList;
@@ -162,7 +163,7 @@ namespace KinaUnaMediaApi.Services
         public List<Video> SetVideosList(int progenyId)
         {
             List<Video> videosList = _mediaContext.VideoDb.AsNoTracking().Where(v => v.ProgenyId == progenyId).ToList();
-            _cache.SetString("videoslist" + progenyId, JsonConvert.SerializeObject(videosList), _cacheOptionsSliding);
+            _cache.SetString(Constants.AppName + "videoslist" + progenyId, JsonConvert.SerializeObject(videosList), _cacheOptionsSliding);
 
             return videosList;
         }
@@ -170,7 +171,7 @@ namespace KinaUnaMediaApi.Services
         public Comment GetComment(int commentId)
         {
             Comment comment;
-            string cachedComment = _cache.GetString("comment" + commentId);
+            string cachedComment = _cache.GetString(Constants.AppName + "comment" + commentId);
             if (!string.IsNullOrEmpty(cachedComment))
             {
                 comment = JsonConvert.DeserializeObject<Comment>(cachedComment);
@@ -178,7 +179,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 comment = _mediaContext.CommentsDb.AsNoTracking().SingleOrDefault(c => c.CommentId == commentId);
-                _cache.SetString("comment" + commentId, JsonConvert.SerializeObject(comment), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "comment" + commentId, JsonConvert.SerializeObject(comment), _cacheOptionsSliding);
             }
 
             return comment;
@@ -187,7 +188,7 @@ namespace KinaUnaMediaApi.Services
         public Comment SetComment(int commentId)
         {
             Comment comment = _mediaContext.CommentsDb.AsNoTracking().SingleOrDefault(c => c.CommentId == commentId);
-            _cache.SetString("comment" + commentId, JsonConvert.SerializeObject(comment), _cacheOptionsSliding);
+            _cache.SetString(Constants.AppName + "comment" + commentId, JsonConvert.SerializeObject(comment), _cacheOptionsSliding);
             if (comment != null)
             {
                 SetCommentsList(comment.CommentThreadNumber);
@@ -216,7 +217,7 @@ namespace KinaUnaMediaApi.Services
 
         public void RemoveComment(int commentId, int commentThreadId)
         {
-            _cache.Remove("comment" + commentId);
+            _cache.Remove(Constants.AppName + "comment" + commentId);
             SetCommentsList(commentThreadId);
 
             Picture picture =
@@ -241,7 +242,7 @@ namespace KinaUnaMediaApi.Services
         public List<Comment> GetCommentsList(int commentThreadId)
         {
             List<Comment> commentsList;
-            string cachedCommentsList = _cache.GetString("commentslist" + commentThreadId);
+            string cachedCommentsList = _cache.GetString(Constants.AppName + "commentslist" + commentThreadId);
             if (!string.IsNullOrEmpty(cachedCommentsList))
             {
                 commentsList = JsonConvert.DeserializeObject<List<Comment>>(cachedCommentsList);
@@ -249,7 +250,7 @@ namespace KinaUnaMediaApi.Services
             else
             {
                 commentsList = _mediaContext.CommentsDb.AsNoTracking().Where(c => c.CommentThreadNumber == commentThreadId).ToList();
-                _cache.SetString("commentslist" + commentThreadId, JsonConvert.SerializeObject(commentsList), _cacheOptionsSliding);
+                _cache.SetString(Constants.AppName + "commentslist" + commentThreadId, JsonConvert.SerializeObject(commentsList), _cacheOptionsSliding);
             }
 
             return commentsList;
@@ -258,14 +259,14 @@ namespace KinaUnaMediaApi.Services
         public List<Comment> SetCommentsList(int commentThreadId)
         {
             List<Comment> commentsList = _mediaContext.CommentsDb.AsNoTracking().Where(c => c.CommentThreadNumber == commentThreadId).ToList();
-            _cache.SetString("commentslist" + commentThreadId, JsonConvert.SerializeObject(commentsList), _cacheOptionsSliding);
+            _cache.SetString(Constants.AppName + "commentslist" + commentThreadId, JsonConvert.SerializeObject(commentsList), _cacheOptionsSliding);
 
             return commentsList;
         }
 
         public void RemoveCommentsList(int commentThreadId)
         {
-            _cache.Remove("commentslist" + commentThreadId);
+            _cache.Remove(Constants.AppName + "commentslist" + commentThreadId);
         }
     }
 }
