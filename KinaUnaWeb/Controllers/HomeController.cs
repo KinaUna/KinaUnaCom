@@ -267,15 +267,12 @@ namespace KinaUnaWeb.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
-                if (User.Identity.IsAuthenticated)
-                {
-                    UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
-                    userinfo.ViewChild = childId;
-                    await _progenyHttpClient.SetViewChild(userId, userinfo);
-                }
+                UserInfo userinfo = await _progenyHttpClient.GetUserInfo(userEmail);
+                userinfo.ViewChild = childId;
+                await _progenyHttpClient.SetViewChild(userId, userinfo);
             }
-
-            return Redirect(returnUrl);
+            
+            return RedirectToAction("Index", new { childId = childId });
         }
 
         [AllowAnonymous]
