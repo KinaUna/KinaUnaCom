@@ -95,7 +95,14 @@
                     Latest posts:
                 </div>
                 await Html.RenderPartialAsync("LatestPostsPartial", Model.LatestPosts);
-
+                <br />
+            }
+            @if (Model.YearAgoPosts.TimeLineItems.Any())
+            {
+                <div>
+                    On this day a year ago:
+                </div>
+                await Html.RenderPartialAsync("YearAgoPartial", Model.YearAgoPosts);
             }
         </div>
 

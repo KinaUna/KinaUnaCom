@@ -69,19 +69,26 @@
         <div class="col-12 col-sm-12 col-md-12 col-lg-4" style="float: right; margin-top: 10px; padding-left: 25px;">
             @if (Model.EventsList.Any())
             {
-                <div>
-                    Kommende begivenheder:
-                </div>
+            <div>
+                Kommende begivenheder:
+            </div>
                 await Html.RenderPartialAsync("EventsPartial", Model.EventsList);
-                <br />
+            <br />
             }
             @if (Model.LatestPosts.TimeLineItems.Any())
             {
-                <div>
-                    Seneste indlæg:
-                </div>
+            <div>
+                Seneste indlæg:
+            </div>
                 await Html.RenderPartialAsync("LatestPostsPartial", Model.LatestPosts);
-
+            <br />
+            }
+            @if (Model.YearAgoPosts.TimeLineItems.Any())
+            {
+            <div>
+                På denne dag, for et år siden:
+            </div>
+                await Html.RenderPartialAsync("YearAgoPartial", Model.YearAgoPosts);
             }
         </div>
     </div>
