@@ -53,10 +53,10 @@ namespace KinaUnaMediaApi.Controllers
             await _context.SaveChangesAsync();
 
             CommentThread cmntThread =
-                await _context.CommentThreadsDb.SingleOrDefaultAsync(c => c.CommentThreadId == model.CommentThreadNumber);
+                await _context.CommentThreadsDb.SingleOrDefaultAsync(c => c.Id == model.CommentThreadNumber);
             cmntThread.CommentsCount = cmntThread.CommentsCount + 1;
             _context.CommentThreadsDb.Update(cmntThread);
-            await _dataService.SetCommentsList(cmntThread.CommentThreadId);
+            await _dataService.SetCommentsList(cmntThread.Id);
 
             await _context.SaveChangesAsync();
             await _dataService.SetComment(newComment.CommentId);
@@ -95,13 +95,13 @@ namespace KinaUnaMediaApi.Controllers
             if (comment != null)
             {
                 CommentThread cmntThread =
-                    await _context.CommentThreadsDb.SingleOrDefaultAsync(c => c.CommentThreadId == comment.CommentThreadNumber);
+                    await _context.CommentThreadsDb.SingleOrDefaultAsync(c => c.Id == comment.CommentThreadNumber);
                 if (cmntThread.CommentsCount > 0)
                 {
                     cmntThread.CommentsCount = cmntThread.CommentsCount - 1;
                     _context.CommentThreadsDb.Update(cmntThread);
                     await _context.SaveChangesAsync();
-                    await _dataService.SetCommentsList(cmntThread.CommentThreadId);
+                    await _dataService.SetCommentsList(cmntThread.Id);
                 }
 
                 _context.CommentsDb.Remove(comment);
