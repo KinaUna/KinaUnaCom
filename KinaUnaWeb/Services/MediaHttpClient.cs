@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
@@ -11,13 +12,14 @@ using KinaUna.Data.Models;
 using KinaUnaWeb.Models.ItemViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Newtonsoft.Json;
 
 namespace KinaUnaWeb.Services
 {
-    public class MediaHttpClient: IMediaHttpClient
+    public class MediaHttpClient : IMediaHttpClient
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IConfiguration _configuration;
@@ -34,7 +36,7 @@ namespace KinaUnaWeb.Services
         private async Task<string> GetNewToken()
         {
             var discoveryClient = new HttpClient();
-            
+
             var tokenResponse = await discoveryClient.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
             {
                 Address = _configuration.GetValue<string>("AuthenticationServer") + "/connect/token",
@@ -43,7 +45,7 @@ namespace KinaUnaWeb.Services
                 ClientSecret = _configuration.GetValue<string>("AuthenticationServerClientSecret"),
                 Scope = Constants.MediaApiName
             });
-            
+
             return tokenResponse.AccessToken;
         }
 
@@ -138,7 +140,7 @@ namespace KinaUnaWeb.Services
             var pictureUri = clientUri + pictureApiPath;
             var resp = await pictureHttpClient.GetAsync(pictureUri);
             string pictureResponseString = await resp.Content.ReadAsStringAsync();
-            
+
             Picture resultPicture = JsonConvert.DeserializeObject<Picture>(pictureResponseString);
             if (timeZone != "")
             {
@@ -222,7 +224,7 @@ namespace KinaUnaWeb.Services
             string pictureResponseString = await resp.Content.ReadAsStringAsync();
 
             List<Picture> resultPictureList = JsonConvert.DeserializeObject<List<Picture>>(pictureResponseString);
-            
+
             return resultPictureList;
         }
 
@@ -265,7 +267,7 @@ namespace KinaUnaWeb.Services
 
             var currentContext = _httpContextAccessor.HttpContext;
             string accessToken = await currentContext.GetTokenAsync(OpenIdConnectParameterNames.AccessToken).ConfigureAwait(false);
-            
+
             HttpClient updatePictureHttpClient = new HttpClient();
             if (!string.IsNullOrWhiteSpace(accessToken))
             {
@@ -417,7 +419,7 @@ namespace KinaUnaWeb.Services
             {
                 pageApiPath = pageApiPath + "&tagFilter=" + tagFilter;
             }
-            
+
             var pageUri = clientUri + pageApiPath;
 
             var pageResponseString = await pageHttpClient.GetStringAsync(pageUri);
@@ -436,7 +438,7 @@ namespace KinaUnaWeb.Services
 
                 }
             }
-            
+
             return model;
         }
 
@@ -464,7 +466,6 @@ namespace KinaUnaWeb.Services
 
             string pageApiPath = "/api/pictures/pictureviewmodel/" + id + "/" + userAccessLevel + "?sortBy=" + sortBy;
             var pictureUri = clientUri + pageApiPath;
-
             var pictureResponseString = await pictureHttpClient.GetStringAsync(pictureUri);
 
             PictureViewModel picture = JsonConvert.DeserializeObject<PictureViewModel>(pictureResponseString);
@@ -475,7 +476,17 @@ namespace KinaUnaWeb.Services
                     picture.PictureTime = TimeZoneInfo.ConvertTimeFromUtc(picture.PictureTime.Value,
                         TimeZoneInfo.FindSystemTimeZoneById(timeZone));
                 }
+
+                if (picture.CommentsList.Any())
+                {
+                    foreach (Comment cmnt in picture.CommentsList)
+                    {
+                        cmnt.Created = TimeZoneInfo.ConvertTimeFromUtc(cmnt.Created,
+                            TimeZoneInfo.FindSystemTimeZoneById(timeZone));
+                    }
+                }
             }
+
             return picture;
         }
 
@@ -562,8 +573,17 @@ namespace KinaUnaWeb.Services
             {
                 if (video.VideoTime.HasValue)
                 {
-                   video.VideoTime = TimeZoneInfo.ConvertTimeFromUtc(video.VideoTime.Value,
-                        TimeZoneInfo.FindSystemTimeZoneById(timeZone));
+                    video.VideoTime = TimeZoneInfo.ConvertTimeFromUtc(video.VideoTime.Value,
+                         TimeZoneInfo.FindSystemTimeZoneById(timeZone));
+                }
+
+                if (video.CommentsList.Any())
+                {
+                    foreach (Comment cmnt in video.CommentsList)
+                    {
+                        cmnt.Created = TimeZoneInfo.ConvertTimeFromUtc(cmnt.Created,
+                            TimeZoneInfo.FindSystemTimeZoneById(timeZone));
+                    }
                 }
             }
             return video;
@@ -708,7 +728,7 @@ namespace KinaUnaWeb.Services
             var newVideoUri = clientUri + newVideoApiPath;
 
             var newVideoResponse = await newVideoHttpClient.PostAsync(newVideoUri, new StringContent(JsonConvert.SerializeObject(video), Encoding.UTF8, "application/json"));
-            
+
             var newVideoResponseString = await newVideoResponse.Content.ReadAsStringAsync();
             Video newVideo = JsonConvert.DeserializeObject<Video>(newVideoResponseString);
 
@@ -845,6 +865,5 @@ namespace KinaUnaWeb.Services
 
             return false;
         }
-
     }
 }
