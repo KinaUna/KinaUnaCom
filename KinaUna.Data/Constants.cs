@@ -2,7 +2,7 @@
 {
     public static class Constants
     {
-        public const bool ResetIdentityDb = false;
+        public const bool ResetIdentityDb = false; // If set to true, the configuration in KinUna.IDP / Config.cs will be reapplied.
         public const string AppName = "KinaUnaDemo";
         public const string WebAppUrl = "https://kinaunademoweb.azurewebsites.net"; // Url of Web App, find it in Azure portal in the App Service's overview.
         public const string AuthAppUrl = "https://kinaunademoauth.azurewebsites.net"; // Url of Auth App, find it in Azure portal in the App Service's overview.
