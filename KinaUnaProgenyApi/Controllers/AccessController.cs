@@ -20,10 +20,12 @@ namespace KinaUnaProgenyApi.Controllers
     {
         private readonly IDataService _dataService;
         private readonly ProgenyDbContext _context;
+        private readonly ImageStore _imageStore;
 
-        public AccessController(IDataService dataService, ProgenyDbContext context)
+        public AccessController(IDataService dataService, ImageStore imageStore, ProgenyDbContext context)
         {
             _dataService = dataService;
+            _imageStore = imageStore;
             _context = context;
         }
 
@@ -220,6 +222,35 @@ namespace KinaUnaProgenyApi.Controllers
                     foreach (UserAccess ua in userAccessList)
                     {
                         Progeny prog = await _dataService.GetProgeny(ua.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == ua.ProgenyId);
+                        result.Add(prog);
+                    }
+
+                    return Ok(result);
+                }
+            }
+
+            return NotFound();
+        }
+
+        // GET api/access/progenylistbyusermobile/[userid]
+        [HttpGet("[action]/{id}")]
+        public async Task<IActionResult> ProgenyListByUserMobile(string id)
+        {
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            if (userEmail.ToUpper() == id.ToUpper())
+            {
+                List<Progeny> result = new List<Progeny>();
+                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); // await _context.UserAccessDb.AsNoTracking().Where(u => u.UserId.ToUpper() == id.ToUpper()).ToListAsync();
+
+                if (userAccessList.Any())
+                {
+                    foreach (UserAccess ua in userAccessList)
+                    {
+                        Progeny prog = await _dataService.GetProgeny(ua.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == ua.ProgenyId);
+                        if (!prog.PictureLink.ToLower().StartsWith("http"))
+                        {
+                            prog.PictureLink = _imageStore.UriFor(prog.PictureLink, "progeny");
+                        }
                         result.Add(prog);
                     }
 
