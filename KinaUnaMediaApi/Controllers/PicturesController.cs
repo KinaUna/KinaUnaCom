@@ -13,6 +13,7 @@ using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace KinaUnaMediaApi.Controllers
@@ -972,6 +973,23 @@ namespace KinaUnaMediaApi.Controllers
             return Ok(model);
         }
 
+        [Route("[action]")]
+        [HttpPost]
+        public async Task<IActionResult> UploadPicture([FromForm]IFormFile file)
+        {
+            string pictureLink = "";
+            using (var stream = file.OpenReadStream())
+            {
+                pictureLink = await _imageStore.SaveImage(stream);
+            }
+
+            if (pictureLink != "")
+            {
+                return Ok(pictureLink);
+            }
+
+            return NoContent();
+        }
 
         // Download pictures to StorageBlob from Url
         [HttpGet]
