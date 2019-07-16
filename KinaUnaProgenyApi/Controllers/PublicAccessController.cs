@@ -494,5 +494,24 @@ namespace KinaUnaProgenyApi.Controllers
             }
             return Ok(result);
         }
+
+        [HttpGet]
+        [Route("[action]/{id}/{accessLevel}")]
+        public async Task<IActionResult> ProgenyYearAgo(int id, int accessLevel = 5)
+        {
+            List<TimeLineItem> timeLineList = await _dataService.GetTimeLineList(Constants.DefaultChildId); // await _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == id && t.AccessLevel >= accessLevel && t.ProgenyTime < DateTime.UtcNow).OrderBy(t => t.ProgenyTime).ToListAsync();
+            DateTime yearAgo = DateTime.Today.AddYears(-1);
+            timeLineList = timeLineList
+                .Where(t => t.AccessLevel >= 5 && t.ProgenyTime.Date == yearAgo.Date).OrderBy(t => t.ProgenyTime).ToList();
+            if (timeLineList.Any())
+            {
+                timeLineList.Reverse();
+                return Ok(timeLineList);
+            }
+            else
+            {
+                return Ok(new List<TimeLineItem>());
+            }
+        }
     }
 }
