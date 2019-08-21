@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
@@ -17,11 +18,13 @@ namespace KinaUnaMediaApi.Controllers
     {
         private readonly MediaDbContext _context;
         private readonly IDataService _dataService;
+        private readonly ImageStore _imageStore;
 
-        public CommentsController(MediaDbContext context, IDataService dataService)
+        public CommentsController(MediaDbContext context, IDataService dataService, ImageStore imageStore)
         {
             _context = context;
             _dataService = dataService;
+            _imageStore = imageStore;
         }
 
         // GET api/comments/5
@@ -31,6 +34,28 @@ namespace KinaUnaMediaApi.Controllers
             Comment result = await _dataService.GetComment(id); // await _context.CommentsDb.SingleOrDefaultAsync(c => c.CommentId == id);
             if (result != null)
             {
+                return Ok(result);
+            }
+
+            return NotFound();
+
+        }
+
+        // GET api/comments/getcommentsbythread/5
+        [HttpGet]
+        [Route("[action]/{threadId}")]
+        public async Task<IActionResult> GetCommentsByThread(int threadId)
+        {
+            List<Comment> result = await _dataService.GetCommentsList(threadId);
+            if (result != null)
+            {
+                foreach (Comment comment in result)
+                {
+                    if (!comment.AuthorImage.ToLower().StartsWith("http"))
+                    {
+                        comment.AuthorImage = _imageStore.UriFor(comment.AuthorImage, "profiles");
+                    }
+                }
                 return Ok(result);
             }
 
