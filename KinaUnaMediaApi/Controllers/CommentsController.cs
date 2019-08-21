@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using KinaUnaMediaApi.Services;
@@ -51,16 +52,27 @@ namespace KinaUnaMediaApi.Controllers
             {
                 foreach (Comment comment in result)
                 {
-                    if (!comment.AuthorImage.ToLower().StartsWith("http"))
+                    UserInfo cmntAuthor = await _dataService.GetUserInfoByUserId(comment.Author);
+                    string authorImg = cmntAuthor?.ProfilePicture ?? "";
+                    string authorName = "";
+                    if (!String.IsNullOrEmpty(authorImg))
                     {
-                        comment.AuthorImage = _imageStore.UriFor(comment.AuthorImage, "profiles");
+                        if (!authorImg.ToLower().StartsWith("http"))
+                        {
+                            authorImg = _imageStore.UriFor(authorImg, "profiles");
+                        }
+                    }
+
+                    comment.AuthorImage = authorImg;
+                    if (string.IsNullOrEmpty(comment.AuthorImage))
+                    {
+                        comment.AuthorImage = Constants.ProfilePictureUrl;
                     }
                 }
                 return Ok(result);
             }
 
             return NotFound();
-
         }
 
         // POST api/comments

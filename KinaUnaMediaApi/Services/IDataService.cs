@@ -23,5 +23,6 @@ namespace KinaUnaMediaApi.Services
         Task<List<Comment>> GetCommentsList(int commentThreadId);
         Task<List<Comment>> SetCommentsList(int commentThreadId);
         Task RemoveCommentsList(int commentThreadId);
+        Task<UserInfo> GetUserInfoByUserId(string id);
     }
 }
