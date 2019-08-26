@@ -282,5 +282,22 @@ namespace KinaUnaMediaApi.Services
 
             return userinfo;
         }
+
+        public async Task<UserInfo> GetUserInfoByEmail(string userEmail)
+        {
+            UserInfo userinfo;
+            string cachedUserInfo = await _cache.GetStringAsync(Constants.AppName + "userinfobymail" + userEmail);
+            if (!string.IsNullOrEmpty(cachedUserInfo))
+            {
+                userinfo = JsonConvert.DeserializeObject<UserInfo>(cachedUserInfo);
+            }
+            else
+            {
+                userinfo = await _context.UserInfoDb.SingleOrDefaultAsync(u => u.UserEmail.ToUpper() == userEmail.ToUpper());
+                await _cache.SetStringAsync(Constants.AppName + "userinfobymail" + userEmail, JsonConvert.SerializeObject(userinfo), _cacheOptionsSliding);
+            }
+
+            return userinfo;
+        }
     }
 }

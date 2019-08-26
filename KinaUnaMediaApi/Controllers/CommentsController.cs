@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using KinaUna.Data;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
 using KinaUnaMediaApi.Services;
 
@@ -131,6 +132,12 @@ namespace KinaUnaMediaApi.Controllers
             Comment comment = await _context.CommentsDb.SingleOrDefaultAsync(c => c.CommentId == id);
             if (comment != null)
             {
+                UserInfo userInfo = await _dataService.GetUserInfoByEmail(User.GetEmail());
+                if (userInfo.UserId != comment.Author)
+                {
+                    return Unauthorized();
+                }
+
                 CommentThread cmntThread =
                     await _context.CommentThreadsDb.SingleOrDefaultAsync(c => c.Id == comment.CommentThreadNumber);
                 if (cmntThread.CommentsCount > 0)
@@ -150,8 +157,6 @@ namespace KinaUnaMediaApi.Controllers
             {
                 return NotFound();
             }
-
         }
-
     }
 }
