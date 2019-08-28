@@ -816,15 +816,16 @@ namespace KinaUnaMediaApi.Controllers
             progeny.Admins = Constants.AdminEmail;
             progeny.NickName = Constants.AppName;
             progeny.BirthDay = new DateTime(2018, 2, 18, 18, 2, 0);
-
             progeny.Id = 0;
             progeny.TimeZone = Constants.DefaultTimezone;
+
             Picture tempPicture = new Picture();
-            tempPicture.ProgenyId = 0;
+            tempPicture.ProgenyId = progenyId;
             tempPicture.Progeny = progeny;
             tempPicture.AccessLevel = 5;
+            tempPicture.PictureLink = Constants.WebAppUrl + "/photodb/0/default_temp.jpg";
             tempPicture.PictureLink600 = Constants.WebAppUrl + "/photodb/0/default_temp.jpg";
-            tempPicture.ProgenyId = progeny.Id;
+            tempPicture.PictureLink1200 = Constants.WebAppUrl + "/photodb/0/default_temp.jpg";
             tempPicture.PictureTime = new DateTime(2018, 9, 1, 12, 00, 00);
             return Ok(tempPicture);
         }
