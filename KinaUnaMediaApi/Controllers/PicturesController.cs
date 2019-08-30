@@ -1164,6 +1164,28 @@ namespace KinaUnaMediaApi.Controllers
             return NoContent();
         }
 
+        [Route("[action]/{id}")]
+        [HttpGet]
+        public IActionResult GetProfilePicture(string id)
+        {
+            string result = "";
+            if (!String.IsNullOrEmpty(id))
+            {
+                if (!id.ToLower().StartsWith("http"))
+                {
+                    result = _imageStore.UriFor(id, "profiles");
+                }
+            }
+
+
+            if (string.IsNullOrEmpty(result))
+            {
+                result = Constants.ProfilePictureUrl;
+            }
+
+            return Ok(result);
+        }
+
         // Download pictures to StorageBlob from Url
         [HttpGet]
         [Route("[action]/{pictureId}")]
