@@ -8,9 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
-using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using KinaUna.Data;
 
@@ -20,13 +18,11 @@ namespace KinaUnaWeb.Controllers
     public class AccountController : Controller
     {
         private readonly IProgenyHttpClient _progenyHttpClient;
-        private readonly ApplicationDbContext _appDbContext;
         private readonly ImageStore _imageStore;
         private readonly IConfiguration _configuration;
-        public AccountController(IProgenyHttpClient progenyHttpClient, ApplicationDbContext appDbContext, ImageStore imageStore, IConfiguration configuration)
+        public AccountController(IProgenyHttpClient progenyHttpClient, ImageStore imageStore, IConfiguration configuration)
         {
             _progenyHttpClient = progenyHttpClient;
-            _appDbContext = appDbContext;
             _imageStore = imageStore;
             _configuration = configuration;
         }
@@ -51,19 +47,19 @@ namespace KinaUnaWeb.Controllers
             // https://github.com/aspnet/Mvc/issues/5853
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
-        
+
         [HttpPost]
         public async Task Login()
         {
             // clear any existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync( OpenIdConnectDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             // see IdentityServer4 QuickStartUI AccountController ExternalLogin
             await HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
                 new AuthenticationProperties()
                 {
-                    RedirectUri = Url.Action("LoginCallback")
+                    RedirectUri = Url.Action("LoginCallback"),
                 });
         }
 
@@ -96,7 +92,7 @@ namespace KinaUnaWeb.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
 
-            
+
             //var homeUrl = Url.Action(nameof(HomeController.Index), "Home");
             //return new SignOutResult(OpenIdConnectDefaults.AuthenticationScheme,
             //    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = homeUrl });
@@ -106,8 +102,8 @@ namespace KinaUnaWeb.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
-            
-            
+
+
         }
 
         public IActionResult AccessDenied()
@@ -134,7 +130,7 @@ namespace KinaUnaWeb.Controllers
 
             if (!userinfo.ProfilePicture.ToLower().StartsWith("http"))
             {
-                userinfo.ProfilePicture = _imageStore.UriFor(userinfo.ProfilePicture, "profiles");
+                userinfo.ProfilePicture = _imageStore.UriFor(userinfo.ProfilePicture, BlobContainers.Profiles);
             }
             var model = new UserInfoViewModel
             {
@@ -158,7 +154,7 @@ namespace KinaUnaWeb.Controllers
             }
 
             model.ChangeLink = _configuration["AuthenticationServer"] + "/Account/ChangePassword";
-            
+
             return View(model);
         }
 
@@ -201,43 +197,24 @@ namespace KinaUnaWeb.Controllers
 
             if (model.File != null && model.File.Name != String.Empty)
             {
-                string oldPictureLink = userinfo.ProfilePicture;
                 using (var stream = model.File.OpenReadStream())
                 {
-                    userinfo.ProfilePicture = await _imageStore.SaveImage(stream, "profiles");
-                }
-
-                if (!oldPictureLink.ToLower().StartsWith("http") && !String.IsNullOrEmpty(oldPictureLink))
-                {
-                    await _imageStore.DeleteImage(oldPictureLink, "profiles");
+                    userinfo.ProfilePicture = await _imageStore.SaveImage(stream, BlobContainers.Profiles);
                 }
             }
 
             await _progenyHttpClient.UpdateUserInfo(userinfo);
 
-            // Todo: This should be done via api instead of direct database access.
-            ApplicationUser user = await _appDbContext.Users.SingleOrDefaultAsync(u => u.Id == userinfo.UserId);
-            user.FirstName = userinfo.FirstName;
-            user.MiddleName = userinfo.MiddleName;
-            user.LastName = userinfo.LastName;
-            // user.Email = userinfo.UserEmail;
-            user.EmailConfirmed = model.IsEmailConfirmed;
-            user.UserName = userinfo.UserName;
-            user.TimeZone = userinfo.Timezone;
-            
-            _appDbContext.Users.Update(user);
 
-            await _appDbContext.SaveChangesAsync();
-            
             model.ProfilePicture = userinfo.ProfilePicture;
             if (!userinfo.ProfilePicture.ToLower().StartsWith("http"))
             {
-                model.ProfilePicture = _imageStore.UriFor(userinfo.ProfilePicture, "profiles");
+                model.ProfilePicture = _imageStore.UriFor(userinfo.ProfilePicture, BlobContainers.Profiles);
             }
 
             if (emailChanged)
             {
-                return RedirectToAction("ChangeEmail", new {oldEmail = userEmail, newEmail = model.UserEmail});
+                return RedirectToAction("ChangeEmail", new { oldEmail = userEmail, newEmail = model.UserEmail });
             }
             return View(model);
         }
@@ -290,6 +267,6 @@ namespace KinaUnaWeb.Controllers
             ViewBag.PublicKey = _configuration["VapidPublicKey"];
             return View();
         }
-        
+
     }
 }
