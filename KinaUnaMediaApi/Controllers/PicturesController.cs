@@ -1112,9 +1112,13 @@ namespace KinaUnaMediaApi.Controllers
 
             using (MagickImage image = new MagickImage(file.OpenReadStream()))
             {
-                int newWidth = 60;
-                int newHeight = (60 / image.Width) * image.Height;
-
+                int newWidth = (180 / image.Height) * image.Width;
+                int newHeight = 180;
+                if (image.Width > image.Height)
+                {
+                    newWidth = 180;
+                    newHeight = (180 / image.Width) * image.Height;
+                }
                 image.Resize(newWidth, newHeight);
                 image.Strip();
 
@@ -1142,9 +1146,13 @@ namespace KinaUnaMediaApi.Controllers
 
             using (MagickImage image = new MagickImage(file.OpenReadStream()))
             {
-                int newWidth = 60;
-                int newHeight = (60 / image.Width) * image.Height;
-
+                int newWidth = (180 / image.Height) * image.Width;
+                int newHeight = 180;
+                if (image.Width > image.Height)
+                {
+                    newWidth = 180;
+                    newHeight = (180 / image.Width) * image.Height;
+                }
                 image.Resize(newWidth, newHeight);
                 image.Strip();
 
