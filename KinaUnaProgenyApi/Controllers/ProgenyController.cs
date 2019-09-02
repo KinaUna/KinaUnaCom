@@ -169,7 +169,10 @@ namespace KinaUnaProgenyApi.Controllers
             progeny.BirthDay = value.BirthDay;
             progeny.Name = value.Name;
             progeny.NickName = value.NickName;
-            progeny.PictureLink = value.PictureLink;
+            if (!string.IsNullOrEmpty(value.PictureLink))
+            {
+                progeny.PictureLink = value.PictureLink;
+            }
             progeny.TimeZone = value.TimeZone;
 
             _context.ProgenyDb.Update(progeny);
