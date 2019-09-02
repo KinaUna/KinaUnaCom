@@ -165,7 +165,20 @@ namespace KinaUnaProgenyApi.Controllers
                 return Unauthorized();
             }
 
-            progeny.Admins = value.Admins;
+            string[] admins = value.Admins.Split(',');
+            bool validAdminEmails = true;
+            foreach (string str in admins)
+            {
+                if (!str.Trim().IsValidEmail())
+                {
+                    validAdminEmails = false;
+                }
+            }
+
+            if (validAdminEmails)
+            {
+                progeny.Admins = value.Admins;
+            }
             progeny.BirthDay = value.BirthDay;
             progeny.Name = value.Name;
             progeny.NickName = value.NickName;
