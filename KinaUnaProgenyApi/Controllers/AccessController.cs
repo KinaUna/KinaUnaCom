@@ -181,7 +181,7 @@ namespace KinaUnaProgenyApi.Controllers
             await _dataService.SetUsersUserAccessList(userAccess.UserId);
             await _dataService.SetUserAccess(userAccess.AccessId);
 
-            return CreatedAtAction(nameof(GetAccess), new { id = userAccess.AccessId });
+            return Ok(userAccess);
         }
 
         // DELETE api/access/5
