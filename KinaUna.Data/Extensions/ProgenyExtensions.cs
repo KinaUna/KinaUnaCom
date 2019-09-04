@@ -15,10 +15,9 @@ namespace KinaUna.Data.Extensions
         public static bool IsInAdminList(this Progeny progeny, string email)
         {
             string[] adminList = progeny.Admins.Split(',');
-            progeny.Admins = "";
             foreach (string adminItem in adminList)
             {
-                if (!adminItem.Trim().ToUpper().Equals(email.Trim().ToUpper()))
+                if (adminItem.Trim().ToUpper().Equals(email.Trim().ToUpper()))
                 {
                     return true;
                 }

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
 
 namespace KinaUnaWeb.Controllers
@@ -63,7 +64,7 @@ namespace KinaUnaWeb.Controllers
                 }
             }
 
-            if (progeny.Admins.ToUpper().Contains(userEmail.ToUpper()))
+            if (progeny.IsInAdminList(userEmail))
             {
                 _userIsProgenyAdmin = true;
                 userAccessLevel = (int)AccessLevel.Private;
@@ -180,7 +181,7 @@ namespace KinaUnaWeb.Controllers
                 }
             }
 
-            if (progeny.Admins.ToUpper().Contains(userEmail.ToUpper()))
+            if (progeny.IsInAdminList(userEmail))
             {
                 _userIsProgenyAdmin = true;
                 userAccessLevel = (int)AccessLevel.Private;

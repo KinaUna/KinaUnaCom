@@ -24,6 +24,7 @@ using KinaUna.Data.Contexts;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
 using KinaUna.Data;
+using KinaUna.Data.Extensions;
 
 namespace KinaUna.IDP.Controllers
 {
@@ -472,7 +473,7 @@ namespace KinaUna.IDP.Controllers
                     }
 
                     List<Progeny> progenyList = await _progContext.ProgenyDb
-                        .Where(p => p.Admins.ToUpper().Contains(oldEmail.ToUpper())).ToListAsync();
+                        .Where(p => p.IsInAdminList(oldEmail)).ToListAsync();
                     if (progenyList.Any())
                     {
                         foreach (Progeny prog in progenyList)

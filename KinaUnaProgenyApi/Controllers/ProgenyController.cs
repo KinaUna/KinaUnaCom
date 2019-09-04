@@ -160,7 +160,7 @@ namespace KinaUnaProgenyApi.Controllers
 
             // Check if user is allowed to edit this child.
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            if (!progeny.Admins.ToUpper().Contains(userEmail.ToUpper()))
+            if (!progeny.IsInAdminList(userEmail))
             {
                 return Unauthorized();
             }
@@ -206,7 +206,7 @@ namespace KinaUnaProgenyApi.Controllers
             {
                 // Check if user is allowed to edit this child.
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                if (!progeny.Admins.ToUpper().Contains(userEmail.ToUpper()))
+                if (!progeny.IsInAdminList(userEmail))
                 {
                     return Unauthorized();
                 }

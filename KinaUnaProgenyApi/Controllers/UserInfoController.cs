@@ -45,7 +45,7 @@ namespace KinaUnaProgenyApi.Controllers
             }
             else
             {
-                List<Progeny> progenyList = await _dataService.GetProgenyUserIsAdmin(userEmail); // _context.ProgenyDb.Where(p => p.Admins.ToUpper().Contains(userEmail.ToUpper())).ToList();
+                List<Progeny> progenyList = await _dataService.GetProgenyUserIsAdmin(userEmail); 
                 if (progenyList.Any())
                 {
                     foreach (Progeny prog in progenyList)
@@ -111,7 +111,7 @@ namespace KinaUnaProgenyApi.Controllers
             }
             else
             {
-                List<Progeny> progenyList = await _dataService.GetProgenyUserIsAdmin(userEmail); // _context.ProgenyDb.Where(p => p.Admins.ToUpper().Contains(userEmail.ToUpper())).ToList();
+                List<Progeny> progenyList = await _dataService.GetProgenyUserIsAdmin(userEmail); 
                 if (progenyList.Any())
                 {
                     foreach (Progeny prog in progenyList)
@@ -177,7 +177,7 @@ namespace KinaUnaProgenyApi.Controllers
             }
             else
             {
-                List<Progeny> progenyList = await _dataService.GetProgenyUserIsAdmin(userEmail); // _context.ProgenyDb.Where(p => p.Admins.ToUpper().Contains(userEmail.ToUpper())).ToList();
+                List<Progeny> progenyList = await _dataService.GetProgenyUserIsAdmin(userEmail); 
                 if (progenyList.Any())
                 {
                     foreach (Progeny prog in progenyList)
