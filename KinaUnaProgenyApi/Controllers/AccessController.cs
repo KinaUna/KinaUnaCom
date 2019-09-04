@@ -126,6 +126,15 @@ namespace KinaUnaProgenyApi.Controllers
 
             _context.UserAccessDb.Add(userAccess);
             await _context.SaveChangesAsync();
+
+            Progeny progeny = await _dataService.GetProgeny(userAccess.ProgenyId);
+            if (userAccess.AccessLevel == (int)AccessLevel.Private && !progeny.Admins.ToUpper().Contains(userAccess.UserId.ToUpper()))
+            {
+
+                progeny.Admins = progeny.Admins + ", " + (userAccess.UserId).ToUpper();
+                await _dataService.UpdateProgenyAdmins(progeny);
+            }
+
             if (userAccess.AccessLevel == (int)AccessLevel.Private)
             {
                 await _dataService.SetProgenyUserIsAdmin(userAccess.UserId);
@@ -172,6 +181,14 @@ namespace KinaUnaProgenyApi.Controllers
             _context.UserAccessDb.Update(userAccess);
             await _context.SaveChangesAsync();
 
+            Progeny progeny = await _dataService.GetProgeny(userAccess.ProgenyId);
+            if (userAccess.AccessLevel == (int)AccessLevel.Private && !progeny.Admins.ToUpper().Contains(userAccess.UserId.ToUpper()))
+            {
+
+                progeny.Admins = progeny.Admins + ", " + (userAccess.UserId).ToUpper();
+                await _dataService.UpdateProgenyAdmins(progeny);
+            }
+
             if (userAccess.AccessLevel == (int)AccessLevel.Private)
             {
                 await _dataService.SetProgenyUserIsAdmin(userAccess.UserId);
@@ -206,6 +223,22 @@ namespace KinaUnaProgenyApi.Controllers
                 else
                 {
                     return NotFound();
+                }
+
+                Progeny progeny = await _dataService.GetProgeny(userAccess.ProgenyId);
+                if (userAccess.AccessLevel == (int)AccessLevel.Private && progeny.Admins.ToUpper().Contains(userAccess.UserId.ToUpper()))
+                {
+                    string[] adminList = progeny.Admins.Split(',');
+                    progeny.Admins = "";
+                    foreach (string adminItem in adminList)
+                    {
+                        if (!adminItem.Trim().ToUpper().Equals(userAccess.UserId.Trim().ToUpper()))
+                        {
+                            progeny.Admins = progeny.Admins + ", " + userAccess.UserId.ToUpper();
+                        }
+                    }
+                    progeny.Admins = progeny.Admins.Trim(',');
+                    await _dataService.UpdateProgenyAdmins(progeny);
                 }
 
                 _context.UserAccessDb.Remove(userAccess);
