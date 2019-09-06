@@ -25,5 +25,8 @@ namespace KinaUna.Data.Models
         public string EndString { get; set; }
         [NotMapped]
         public Progeny Progeny { get; set; }
+
+        [NotMapped]
+        public int SleepNumber { get; set; }
     }
 }
