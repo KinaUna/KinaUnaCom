@@ -18,11 +18,12 @@ namespace KinaUna.Data.Extensions
             {
                 return false;
             }
-
             string[] adminList = progeny.Admins.Split(',');
+            string emailTrimmed = email.Trim().ToUpper();
             foreach (string adminItem in adminList)
             {
-                if (adminItem.Trim().ToUpper().Equals(email.Trim().ToUpper()))
+                string itemTrimmed = adminItem.Trim().ToUpper();
+                if (itemTrimmed.Equals(emailTrimmed))
                 {
                     return true;
                 }

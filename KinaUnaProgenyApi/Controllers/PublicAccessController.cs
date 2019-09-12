@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KinaUna.Data;
-using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using KinaUnaProgenyApi.Models;
 using KinaUnaProgenyApi.Services;
@@ -42,7 +41,7 @@ namespace KinaUnaProgenyApi.Controllers
             Progeny result = await _dataService.GetProgeny(Constants.DefaultChildId); // _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == Constants.DefaultChildId);
             if (!result.PictureLink.ToLower().StartsWith("http"))
             {
-                result.PictureLink = _imageStore.UriFor(result.PictureLink, "progeny");
+                result.PictureLink = _imageStore.UriFor(result.PictureLink, BlobContainers.Progeny);
             }
             return Ok(result);
         }
@@ -176,7 +175,7 @@ namespace KinaUnaProgenyApi.Controllers
             }
             if (!result.PictureLink.ToLower().StartsWith("http"))
             {
-                result.PictureLink = _imageStore.UriFor(result.PictureLink, "contacts");
+                result.PictureLink = _imageStore.UriFor(result.PictureLink, BlobContainers.Contacts);
             }
             return Ok(result);
         }
@@ -193,10 +192,34 @@ namespace KinaUnaProgenyApi.Controllers
                 {
                     if (!cont.PictureLink.ToLower().StartsWith("http"))
                     {
-                        cont.PictureLink = _imageStore.UriFor(cont.PictureLink, "contacts");
+                        cont.PictureLink = _imageStore.UriFor(cont.PictureLink, BlobContainers.Contacts);
                     }
                 }
                 return Ok(contactsList);
+            }
+            else
+            {
+                return Ok(new List<Contact>());
+            }
+
+        }
+
+        [HttpGet]
+        [Route("[action]/{id}/{accessLevel}")]
+        public async Task<IActionResult> ProgenyFriendsMobile(int id, int accessLevel = 5)
+        {
+            List<Friend> friendsList = await _dataService.GetFriendsList(Constants.DefaultChildId);
+            friendsList = friendsList.Where(c => c.AccessLevel >= 5).ToList();
+            if (friendsList.Any())
+            {
+                foreach (Friend frn in friendsList)
+                {
+                    if (!frn.PictureLink.ToLower().StartsWith("http"))
+                    {
+                        frn.PictureLink = _imageStore.UriFor(frn.PictureLink, BlobContainers.Friends);
+                    }
+                }
+                return Ok(friendsList);
             }
             else
             {
@@ -272,7 +295,7 @@ namespace KinaUnaProgenyApi.Controllers
             }
             if (!result.PictureLink.ToLower().StartsWith("http"))
             {
-                result.PictureLink = _imageStore.UriFor(result.PictureLink, "friends");
+                result.PictureLink = _imageStore.UriFor(result.PictureLink, BlobContainers.Friends);
             }
             return Ok(result);
         }
@@ -500,9 +523,8 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> ProgenyYearAgo(int id, int accessLevel = 5)
         {
             List<TimeLineItem> timeLineList = await _dataService.GetTimeLineList(Constants.DefaultChildId); // await _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == id && t.AccessLevel >= accessLevel && t.ProgenyTime < DateTime.UtcNow).OrderBy(t => t.ProgenyTime).ToListAsync();
-            DateTime yearAgo = DateTime.Today.AddYears(-1);
             timeLineList = timeLineList
-                .Where(t => t.AccessLevel >= 5 && t.ProgenyTime.Date == yearAgo.Date).OrderBy(t => t.ProgenyTime).ToList();
+                .Where(t => t.AccessLevel >= accessLevel && t.ProgenyTime.Year < DateTime.UtcNow.Year && t.ProgenyTime.Month == DateTime.UtcNow.Month && t.ProgenyTime.Day == DateTime.UtcNow.Day).OrderBy(t => t.ProgenyTime).ToList();
             if (timeLineList.Any())
             {
                 timeLineList.Reverse();
