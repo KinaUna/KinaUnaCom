@@ -21,6 +21,7 @@ using System;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
 using KinaUnaWeb.Hubs;
@@ -130,10 +131,17 @@ namespace KinaUnaWeb
                 options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
                 {
-                    options.ExpireTimeSpan = TimeSpan.FromDays(180);
+                    options.SlidingExpiration = true;
+                    //options.ExpireTimeSpan = TimeSpan.FromDays(180);
+                    options.Events.OnSigningIn = (context) =>
+                    {
+                        context.CookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
+                        return Task.CompletedTask;
+                    };
+
                     if (!_env.IsDevelopment())
                     {
-                        options.Cookie.Domain = "." + Constants.WebAppUrl.ToLower().Replace("https://", "");
+                        options.Cookie.Domain = "." + Constants.AppRootDomain;
                     }
                 })
                 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>

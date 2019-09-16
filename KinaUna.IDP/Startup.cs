@@ -180,7 +180,7 @@ namespace KinaUna.IDP
 
                     // This enables automatic token cleanup. this is optional.
                     options.EnableTokenCleanup = true;
-                    options.TokenCleanupInterval = 3600;
+                    options.TokenCleanupInterval = 21600;
                 }).AddRedisCaching(options =>
                 {
                     options.RedisConnectionString = Configuration["RedisConnection"];
