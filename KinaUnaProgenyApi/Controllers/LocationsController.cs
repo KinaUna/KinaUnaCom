@@ -35,10 +35,10 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); 
             if (userAccess != null || id == Constants.DefaultChildId)
             {
-                List<Location> locationsList = await _dataService.GetLocationsList(id); // await _context.LocationsDb.AsNoTracking().Where(l => l.ProgenyId == id && l.AccessLevel >= accessLevel).ToListAsync();
+                List<Location> locationsList = await _dataService.GetLocationsList(id); 
                 locationsList = locationsList.Where(l => l.AccessLevel >= accessLevel).ToList();
                 if (locationsList.Any())
                 {
@@ -54,7 +54,7 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLocationItem(int id)
         {
-            Location result = await _dataService.GetLocation(id); // await _context.LocationsDb.AsNoTracking().SingleOrDefaultAsync(l => l.LocationId == id);
+            Location result = await _dataService.GetLocation(id); 
 
             if (result == null)
             {
@@ -62,7 +62,7 @@ namespace KinaUnaProgenyApi.Controllers
             }
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
             if (userAccess != null || id == Constants.DefaultChildId)
             {
                 return Ok(result);
@@ -260,11 +260,11 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetLocationMobile(int id)
         {
-            Location result = await _dataService.GetLocation(id); // await _context.LocationsDb.AsNoTracking().SingleOrDefaultAsync(l => l.LocationId == id);
+            Location result = await _dataService.GetLocation(id); 
             if (result != null)
             {
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail);
 
                 if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
                 {

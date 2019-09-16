@@ -35,10 +35,10 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); // _context.UserAccessDb.SingleOrDefault(u => u.ProgenyId == id && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail);
             if (userAccess != null || id == Constants.DefaultChildId)
             {
-                List<CalendarItem> calendarList = await _dataService.GetCalendarList(id); // await _context.CalendarDb.AsNoTracking().Where(c => c.ProgenyId == id && c.AccessLevel >= accessLevel).ToListAsync();
+                List<CalendarItem> calendarList = await _dataService.GetCalendarList(id);
                 calendarList = calendarList.Where(c => c.AccessLevel >= accessLevel).ToList();
                 if (calendarList.Any())
                 {
@@ -53,10 +53,10 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCalendarItem(int id)
         {
-            CalendarItem result = await _dataService.GetCalendarItem(id); // await _context.CalendarDb.AsNoTracking().SingleOrDefaultAsync(l => l.EventId == id);
+            CalendarItem result = await _dataService.GetCalendarItem(id); 
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _context.UserAccessDb.SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
             if (userAccess != null || id == Constants.DefaultChildId)
             {
                 return Ok(result);
@@ -228,11 +228,11 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> EventList(int progenyId, int accessLevel)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); // _context.UserAccessDb.SingleOrDefault(u => u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); 
 
             if (userAccess != null || progenyId == Constants.DefaultChildId)
             {
-                List<CalendarItem> model = await _dataService.GetCalendarList(progenyId); // await _context.CalendarDb.Where(e => e.ProgenyId == progenyId && e.EndTime > DateTime.UtcNow && e.AccessLevel >= accessLevel).ToListAsync();
+                List<CalendarItem> model = await _dataService.GetCalendarList(progenyId);
                 model = model.Where(c => c.EndTime > DateTime.UtcNow && c.AccessLevel >= accessLevel).ToList();
                 model = model.OrderBy(e => e.StartTime).ToList();
                 model = model.Take(5).ToList();
@@ -246,10 +246,10 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetItemMobile(int id)
         {
-            CalendarItem result = await _dataService.GetCalendarItem(id); // await _context.CalendarDb.AsNoTracking().SingleOrDefaultAsync(l => l.EventId == id);
+            CalendarItem result = await _dataService.GetCalendarItem(id); 
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // await _context.UserAccessDb.AsNoTracking().SingleOrDefaultAsync(u => u.UserId.ToUpper() == userEmail.ToUpper() && u.ProgenyId == result.ProgenyId);
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
             if (userAccess != null)
             {
                 return Ok(result);
@@ -263,10 +263,10 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> ProgenyMobile(int id, int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); // await _context.UserAccessDb.AsNoTracking().SingleOrDefaultAsync(u => u.UserId.ToUpper() == userEmail.ToUpper() && u.ProgenyId == id);
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); 
             if (userAccess != null)
             {
-                List<CalendarItem> calendarList = await _dataService.GetCalendarList(id); // await _context.CalendarDb.AsNoTracking().Where(c => c.ProgenyId == id && c.AccessLevel >= accessLevel).ToListAsync();
+                List<CalendarItem> calendarList = await _dataService.GetCalendarList(id); 
                 calendarList = calendarList.Where(c => c.AccessLevel >= accessLevel).ToList();
                 if (calendarList.Any())
                 {

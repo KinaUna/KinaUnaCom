@@ -77,8 +77,8 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> GetAccess(int id)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess result = await _dataService.GetUserAccess(id); // await _context.UserAccessDb.AsNoTracking().SingleOrDefaultAsync(u => u.AccessId == id);
-            result.Progeny = await _dataService.GetProgeny(result.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == result.ProgenyId);
+            UserAccess result = await _dataService.GetUserAccess(id); 
+            result.Progeny = await _dataService.GetProgeny(result.ProgenyId); 
             if (result.Progeny.IsInAdminList(User.GetEmail()) || result.UserId.ToUpper() == userEmail.ToUpper())
             {
                 return Ok(result);
@@ -259,13 +259,13 @@ namespace KinaUnaProgenyApi.Controllers
             if (userEmail.ToUpper() == id.ToUpper())
             {
                 List<Progeny> result = new List<Progeny>();
-                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); // await _context.UserAccessDb.AsNoTracking().Where(u => u.UserId.ToUpper() == id.ToUpper()).ToListAsync();
+                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); 
 
                 if (userAccessList.Any())
                 {
                     foreach (UserAccess ua in userAccessList)
                     {
-                        Progeny prog = await _dataService.GetProgeny(ua.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == ua.ProgenyId);
+                        Progeny prog = await _dataService.GetProgeny(ua.ProgenyId);
                         result.Add(prog);
                     }
 
@@ -284,16 +284,16 @@ namespace KinaUnaProgenyApi.Controllers
             if (userEmail.ToUpper() == id.ToUpper())
             {
                 List<Progeny> result = new List<Progeny>();
-                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); // await _context.UserAccessDb.AsNoTracking().Where(u => u.UserId.ToUpper() == id.ToUpper()).ToListAsync();
+                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); 
 
                 if (userAccessList.Any())
                 {
                     foreach (UserAccess ua in userAccessList)
                     {
-                        Progeny prog = await _dataService.GetProgeny(ua.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == ua.ProgenyId);
+                        Progeny prog = await _dataService.GetProgeny(ua.ProgenyId); 
                         if (!prog.PictureLink.ToLower().StartsWith("http"))
                         {
-                            prog.PictureLink = _imageStore.UriFor(prog.PictureLink, "progeny");
+                            prog.PictureLink = _imageStore.UriFor(prog.PictureLink, BlobContainers.Progeny);
                         }
                         result.Add(prog);
                     }
@@ -312,12 +312,12 @@ namespace KinaUnaProgenyApi.Controllers
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
             if (userEmail.ToUpper() == id.ToUpper())
             {
-                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); // await _context.UserAccessDb.AsNoTracking().Where(u => u.UserId.ToUpper() == id.ToUpper()).ToListAsync();
+                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); 
                 if (userAccessList.Any())
                 {
                     foreach (UserAccess ua in userAccessList)
                     {
-                        ua.Progeny = await _dataService.GetProgeny(ua.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == ua.ProgenyId);
+                        ua.Progeny = await _dataService.GetProgeny(ua.ProgenyId); 
                     }
                     return Ok(userAccessList);
                 }
@@ -333,14 +333,14 @@ namespace KinaUnaProgenyApi.Controllers
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
             if (userEmail.ToUpper() == id.ToUpper())
             {
-                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); // await _context.UserAccessDb.AsNoTracking().Where(u => u.UserId.ToUpper() == id.ToUpper() && u.AccessLevel == 0).ToListAsync();
+                List<UserAccess> userAccessList = await _dataService.GetUsersUserAccessList(id); 
                 userAccessList = userAccessList.Where(u => u.AccessLevel == 0).ToList();
                 List<Progeny> progenyList = new List<Progeny>();
                 if (userAccessList.Any())
                 {
                     foreach (UserAccess ua in userAccessList)
                     {
-                        Progeny progeny = await _dataService.GetProgeny(ua.ProgenyId); // await _context.ProgenyDb.AsNoTracking().SingleOrDefaultAsync(p => p.Id == ua.ProgenyId);
+                        Progeny progeny = await _dataService.GetProgeny(ua.ProgenyId);
                         progenyList.Add(progeny);
                     }
 
