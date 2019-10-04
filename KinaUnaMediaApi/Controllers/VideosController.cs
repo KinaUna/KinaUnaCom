@@ -466,7 +466,7 @@ namespace KinaUnaMediaApi.Controllers
         {
             // Check if user should be allowed access.
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); // _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
             if (userAccess == null && progenyId != Constants.DefaultChildId)
             {
@@ -479,14 +479,29 @@ namespace KinaUnaMediaApi.Controllers
             }
 
             List<Video> allItems;
+            allItems = await _dataService.GetVideosList(progenyId);
+            List<string> tagsList = new List<string>();
+            foreach (Video vid in allItems)
+            {
+                if (!String.IsNullOrEmpty(vid.Tags))
+                {
+                    List<string> pvmTags = vid.Tags.Split(',').ToList();
+                    foreach (string tagstring in pvmTags)
+                    {
+                        if (!tagsList.Contains(tagstring.TrimStart(' ', ',').TrimEnd(' ', ',')))
+                        {
+                            tagsList.Add(tagstring.TrimStart(' ', ',').TrimEnd(' ', ','));
+                        }
+                    }
+                }
+            }
             if (!string.IsNullOrEmpty(tagFilter))
             {
-                allItems = await _dataService.GetVideosList(progenyId);
+
                 allItems = allItems.Where(p => p.AccessLevel >= accessLevel && p.Tags != null && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.VideoTime).ToList();
             }
             else
             {
-                allItems = await _dataService.GetVideosList(progenyId); 
                 allItems = allItems.Where(p => p.AccessLevel >= accessLevel).OrderBy(p => p.VideoTime).ToList();
             }
 
@@ -497,7 +512,6 @@ namespace KinaUnaMediaApi.Controllers
 
             int videoCounter = 1;
             int vidCount = allItems.Count;
-            List<string> tagsList = new List<string>();
             foreach (Video vid in allItems)
             {
                 if (sortBy == 1)
@@ -510,17 +524,6 @@ namespace KinaUnaMediaApi.Controllers
                 }
 
                 videoCounter++;
-                if (!String.IsNullOrEmpty(vid.Tags))
-                {
-                    List<string> pvmTags = vid.Tags.Split(',').ToList();
-                    foreach (string tagstring in pvmTags)
-                    {
-                        if (!tagsList.Contains(tagstring.TrimStart(' ', ',').TrimEnd(' ', ',')))
-                        {
-                            tagsList.Add(tagstring.TrimStart(' ', ',').TrimEnd(' ', ','));
-                        }
-                    }
-                }
 
                 if (vid.Duration != null)
                 {
@@ -546,7 +549,7 @@ namespace KinaUnaMediaApi.Controllers
 
             foreach (Video vid in itemsOnPage)
             {
-                vid.Comments = await _dataService.GetCommentsList(vid.CommentThreadNumber); 
+                vid.Comments = await _dataService.GetCommentsList(vid.CommentThreadNumber); // await _context.CommentsDb.Where(c => c.CommentThreadNumber == vid.CommentThreadNumber).ToListAsync();
             }
             VideoPageViewModel model = new VideoPageViewModel();
             model.VideosList = itemsOnPage;

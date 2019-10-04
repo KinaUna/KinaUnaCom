@@ -896,7 +896,7 @@ namespace KinaUnaMediaApi.Controllers
         {
             // Check if user should be allowed access.
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail);
 
             if (userAccess == null && progenyId != Constants.DefaultChildId)
             {
@@ -909,14 +909,30 @@ namespace KinaUnaMediaApi.Controllers
             }
 
             List<Picture> allItems;
-            if (tagFilter != "")
+            allItems = await _dataService.GetPicturesList(progenyId);
+            List<string> tagsList = new List<string>();
+            foreach (Picture pic in allItems)
             {
-                allItems = await _dataService.GetPicturesList(progenyId);
-                allItems = allItems.Where(p => p.AccessLevel >= accessLevel && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToList();
+                if (!String.IsNullOrEmpty(pic.Tags))
+                {
+                    List<string> pvmTags = pic.Tags.Split(',').ToList();
+                    foreach (string tagstring in pvmTags)
+                    {
+                        if (!tagsList.Contains(tagstring.TrimStart(' ', ',').TrimEnd(' ', ',')))
+                        {
+                            tagsList.Add(tagstring.TrimStart(' ', ',').TrimEnd(' ', ','));
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(tagFilter))
+            {
+
+                allItems = allItems.Where(p => p.AccessLevel >= accessLevel && p.Tags != null && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToList();
             }
             else
             {
-                allItems = await _dataService.GetPicturesList(progenyId);
                 allItems = allItems.Where(p => p.AccessLevel >= accessLevel).OrderBy(p => p.PictureTime).ToList();
             }
 
@@ -927,7 +943,7 @@ namespace KinaUnaMediaApi.Controllers
 
             int pictureCounter = 1;
             int picCount = allItems.Count;
-            List<string> tagsList = new List<string>();
+
             foreach (Picture pic in allItems)
             {
                 if (sortBy == 1)
@@ -940,17 +956,6 @@ namespace KinaUnaMediaApi.Controllers
                 }
 
                 pictureCounter++;
-                if (!String.IsNullOrEmpty(pic.Tags))
-                {
-                    List<string> pvmTags = pic.Tags.Split(',').ToList();
-                    foreach (string tagstring in pvmTags)
-                    {
-                        if (!tagsList.Contains(tagstring.TrimStart(' ', ',').TrimEnd(' ', ',')))
-                        {
-                            tagsList.Add(tagstring.TrimStart(' ', ',').TrimEnd(' ', ','));
-                        }
-                    }
-                }
             }
 
             var itemsOnPage = allItems
