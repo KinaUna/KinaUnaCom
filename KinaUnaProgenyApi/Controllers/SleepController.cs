@@ -479,5 +479,77 @@ namespace KinaUnaProgenyApi.Controllers
 
             return Unauthorized();
         }
+
+        [HttpGet("[action]/{sleepId}/{accessLevel}/{sortOrder}")]
+        public async Task<IActionResult> GetSleepDetails(int sleepId, int accessLevel, int sortOrder)
+        {
+            string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+            Sleep currentSleep = await _dataService.GetSleep(sleepId);
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(currentSleep.ProgenyId, userEmail);
+            if (userAccess != null)
+            {
+                string userTimeZone = Constants.DefaultTimezone;
+                List<Sleep> sList = await _dataService.GetSleepList(currentSleep.ProgenyId);
+                List<Sleep> sleepList = new List<Sleep>();
+                foreach (Sleep s in sList)
+                {
+                    if (s.AccessLevel >= accessLevel)
+                    {
+                        sleepList.Add(s);
+                    }
+                }
+
+                if (sortOrder == 0)
+                {
+                    sleepList = sleepList.OrderBy(s => s.SleepStart).ToList();
+                }
+                else
+                {
+                    sleepList = sleepList.OrderByDescending(s => s.SleepStart).ToList();
+                }
+
+                List<Sleep> model = new List<Sleep>();
+
+                if (currentSleep != null)
+                {
+                    model.Add(currentSleep);
+                    int currentSleepIndex = sleepList.IndexOf(currentSleep);
+                    if (currentSleepIndex > 0)
+                    {
+                        model.Add(sleepList[currentSleepIndex - 1]);
+                    }
+                    else
+                    {
+                        model.Add(sleepList[sleepList.Count - 1]);
+                    }
+
+                    if (sleepList.Count < currentSleepIndex + 1)
+                    {
+                        model.Add(sleepList[currentSleepIndex + 1]);
+                    }
+                    else
+                    {
+                        model.Add(sleepList[0]);
+                    }
+
+                    foreach (Sleep s in model)
+                    {
+                        s.SleepStart = TimeZoneInfo.ConvertTimeFromUtc(s.SleepStart,
+                            TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+                        s.SleepEnd = TimeZoneInfo.ConvertTimeFromUtc(s.SleepEnd,
+                            TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+                        DateTimeOffset sOffset = new DateTimeOffset(s.SleepStart,
+                            TimeZoneInfo.FindSystemTimeZoneById(userTimeZone).GetUtcOffset(s.SleepStart));
+                        DateTimeOffset eOffset = new DateTimeOffset(s.SleepEnd,
+                            TimeZoneInfo.FindSystemTimeZoneById(userTimeZone).GetUtcOffset(s.SleepEnd));
+                        s.SleepDuration = eOffset - sOffset;
+                    }
+                }
+
+                return Ok(model);
+            }
+
+            return Unauthorized();
+        }
     }
 }
