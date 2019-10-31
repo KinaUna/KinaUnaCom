@@ -45,6 +45,7 @@ namespace KinaUnaMediaApi
                 options.UseSqlServer(Configuration["ProgenyDefaultConnection"]));
 
             services.AddScoped<IDataService, DataService>();
+            services.AddSingleton<AzureNotifications>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 

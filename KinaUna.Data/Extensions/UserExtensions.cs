@@ -17,5 +17,16 @@ namespace KinaUna.Data.Extensions
         {
             return principal?.FindFirst(x => x.Type.Equals(JwtClaimTypes.Email))?.Value;
         }
+
+
+        /// <summary>
+        /// Gets the users User Id.
+        /// </summary>
+        /// <param name="principal">ClaimsPrincipal: The User object to obtain an Id from.</param>
+        /// <returns>string: The User's Id.</returns>
+        public static string GetUserId(this ClaimsPrincipal principal)
+        {
+            return principal?.FindFirst(x => x.Type.Equals(JwtClaimTypes.Subject))?.Value;
+        }
     }
 }
