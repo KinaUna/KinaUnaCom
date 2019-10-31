@@ -21,19 +21,21 @@ namespace KinaUnaMediaApi.Controllers
         private readonly MediaDbContext _context;
         private readonly IDataService _dataService;
         private readonly ImageStore _imageStore;
+        private readonly AzureNotifications _azureNotifications;
 
-        public CommentsController(MediaDbContext context, IDataService dataService, ImageStore imageStore)
+        public CommentsController(MediaDbContext context, IDataService dataService, ImageStore imageStore, AzureNotifications azureNotifications)
         {
             _context = context;
             _dataService = dataService;
             _imageStore = imageStore;
+            _azureNotifications = azureNotifications;
         }
 
         // GET api/comments/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetComment(int id)
         {
-            Comment result = await _dataService.GetComment(id); 
+            Comment result = await _dataService.GetComment(id); // await _context.CommentsDb.SingleOrDefaultAsync(c => c.CommentId == id);
             if (result != null)
             {
                 return Ok(result);
@@ -60,7 +62,7 @@ namespace KinaUnaMediaApi.Controllers
                     {
                         if (!authorImg.ToLower().StartsWith("http"))
                         {
-                            authorImg = _imageStore.UriFor(authorImg, BlobContainers.Profiles);
+                            authorImg = _imageStore.UriFor(authorImg, "profiles");
                         }
                     }
 
@@ -69,6 +71,31 @@ namespace KinaUnaMediaApi.Controllers
                     {
                         comment.AuthorImage = Constants.ProfilePictureUrl;
                     }
+
+                    if (!String.IsNullOrEmpty(cmntAuthor.FirstName))
+                    {
+                        authorName = cmntAuthor.FirstName;
+                    }
+                    if (!String.IsNullOrEmpty(cmntAuthor.MiddleName))
+                    {
+                        authorName = authorName + " " + cmntAuthor.MiddleName;
+                    }
+                    if (!String.IsNullOrEmpty(cmntAuthor.LastName))
+                    {
+                        authorName = authorName + " " + cmntAuthor.LastName;
+                    }
+
+                    authorName = authorName.Trim();
+                    if (String.IsNullOrEmpty(authorName))
+                    {
+                        authorName = cmntAuthor.UserName;
+                        if (String.IsNullOrEmpty(authorName))
+                        {
+                            authorName = comment.DisplayName;
+                        }
+                    }
+
+                    comment.DisplayName = authorName;
                 }
                 return Ok(result);
             }
@@ -99,6 +126,15 @@ namespace KinaUnaMediaApi.Controllers
             await _context.SaveChangesAsync();
             await _dataService.SetComment(newComment.CommentId);
 
+            string title = "New comment for " + model.Progeny.NickName;
+            string message = model.DisplayName + " added a new comment for " + model.Progeny.NickName;
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = model.Progeny.Id;
+            tItem.ItemId = model.ItemId;
+            tItem.ItemType = model.ItemType;
+            tItem.AccessLevel = model.AccessLevel;
+            UserInfo userinfo = await _dataService.GetUserInfoByUserId(model.Author);
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
             return Ok(newComment);
         }
 
@@ -129,6 +165,7 @@ namespace KinaUnaMediaApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+
             Comment comment = await _context.CommentsDb.SingleOrDefaultAsync(c => c.CommentId == id);
             if (comment != null)
             {

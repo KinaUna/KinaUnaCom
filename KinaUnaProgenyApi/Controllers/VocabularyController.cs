@@ -6,6 +6,7 @@ using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
+using KinaUnaProgenyApi.Models;
 using KinaUnaProgenyApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,11 +22,13 @@ namespace KinaUnaProgenyApi.Controllers
     {
         private readonly ProgenyDbContext _context;
         private readonly IDataService _dataService;
+        private readonly AzureNotifications _azureNotifications;
 
-        public VocabularyController(ProgenyDbContext context, IDataService dataService)
+        public VocabularyController(ProgenyDbContext context, IDataService dataService, AzureNotifications azureNotifications)
         {
             _context = context;
             _dataService = dataService;
+            _azureNotifications = azureNotifications;
         }
 
         // GET api/vocabulary/progeny/[id]
@@ -34,7 +37,7 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> Progeny(int id, [FromQuery] int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail);
             if (userAccess != null || id == Constants.DefaultChildId)
             {
                 List<VocabularyItem> wordList = await _dataService.GetVocabularyList(id);
@@ -125,6 +128,10 @@ namespace KinaUnaProgenyApi.Controllers
             await _context.SaveChangesAsync();
             await _dataService.SetTimeLineItem(tItem.TimeLineId);
 
+            string title = "Word added for " + prog.NickName;
+            string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " added a new word for " + prog.NickName;
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
             return Ok(vocabularyItem);
         }
 
@@ -182,6 +189,11 @@ namespace KinaUnaProgenyApi.Controllers
                 await _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
 
+            UserInfo userinfo = await _dataService.GetUserInfoByEmail(userEmail);
+            string title = "Word edited for " + prog.NickName;
+            string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " edited a word for " + prog.NickName;
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
             return Ok(vocabularyItem);
         }
 
@@ -222,6 +234,12 @@ namespace KinaUnaProgenyApi.Controllers
                 await _context.SaveChangesAsync();
                 await _dataService.RemoveVocabularyItem(vocabularyItem.WordId, vocabularyItem.ProgenyId);
 
+                UserInfo userinfo = await _dataService.GetUserInfoByEmail(userEmail);
+                string title = "Word deleted for " + prog.NickName;
+                string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " deleted a word for " + prog.NickName + ". Word: " + vocabularyItem.Word;
+                tItem.AccessLevel = 0;
+                await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
                 return NoContent();
             }
 
@@ -231,12 +249,12 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetItemMobile(int id)
         {
-            VocabularyItem result = await _dataService.GetVocabularyItem(id); 
+            VocabularyItem result = await _dataService.GetVocabularyItem(id);
 
             if (result != null)
             {
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
+                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail);
 
                 if (userAccess != null || result.ProgenyId == Constants.DefaultChildId)
                 {

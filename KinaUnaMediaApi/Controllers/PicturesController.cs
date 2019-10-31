@@ -28,13 +28,15 @@ namespace KinaUnaMediaApi.Controllers
         private readonly ProgenyDbContext _progenyDbContext;
         private readonly ImageStore _imageStore;
         private readonly IDataService _dataService;
+        private readonly AzureNotifications _azureNotifications;
 
-        public PicturesController(MediaDbContext context, ProgenyDbContext progenyDbContext, ImageStore imageStore, IDataService dataService)
+        public PicturesController(MediaDbContext context, ProgenyDbContext progenyDbContext, ImageStore imageStore, IDataService dataService, AzureNotifications azureNotifications)
         {
             _context = context;
             _progenyDbContext = progenyDbContext;
             _imageStore = imageStore;
             _dataService = dataService;
+            _azureNotifications = azureNotifications;
         }
 
         // GET api/pictures/page[?pageSize=3&pageIndex=10&progenyId=2&accessLevel=1&tagFilter=funny]
@@ -44,7 +46,7 @@ namespace KinaUnaMediaApi.Controllers
         {
             // Check if user should be allowed access.
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail);
 
             if (userAccess == null && progenyId != Constants.DefaultChildId)
             {
@@ -66,7 +68,7 @@ namespace KinaUnaMediaApi.Controllers
             }
             else
             {
-                allItems = await _dataService.GetPicturesList(progenyId); 
+                allItems = await _dataService.GetPicturesList(progenyId);
                 allItems = allItems
                     .Where(p => p.AccessLevel >= accessLevel).OrderBy(p => p.PictureTime).ToList();
             }
@@ -111,7 +113,7 @@ namespace KinaUnaMediaApi.Controllers
 
             foreach (Picture pic in itemsOnPage)
             {
-                pic.Comments = await _dataService.GetCommentsList(pic.CommentThreadNumber); 
+                pic.Comments = await _dataService.GetCommentsList(pic.CommentThreadNumber);
             }
             PicturePageViewModel model = new PicturePageViewModel();
             model.PicturesList = itemsOnPage;
@@ -133,13 +135,13 @@ namespace KinaUnaMediaApi.Controllers
         [Route("[action]/{id}/{accessLevel}")]
         public async Task<IActionResult> PictureViewModel(int id, int accessLevel, [FromQuery] int sortBy = 1)
         {
-            Picture picture = await _dataService.GetPicture(id); 
+            Picture picture = await _dataService.GetPicture(id);
 
             if (picture != null)
             {
                 // Check if user should be allowed access.
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(picture.ProgenyId, userEmail); 
+                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(picture.ProgenyId, userEmail);
 
                 if (userAccess == null && picture.ProgenyId != Constants.DefaultChildId)
                 {
@@ -274,6 +276,7 @@ namespace KinaUnaMediaApi.Controllers
                         pic.PictureLink600 = _imageStore.UriFor(pic.PictureLink600);
                     }
                 }
+
                 return Ok(picturesList);
             }
             Progeny progeny = new Progeny();
@@ -313,7 +316,7 @@ namespace KinaUnaMediaApi.Controllers
                     return Unauthorized();
                 }
 
-                picture.Comments = await _dataService.GetCommentsList(picture.CommentThreadNumber); 
+                picture.Comments = await _dataService.GetCommentsList(picture.CommentThreadNumber);
 
                 return Ok(picture);
             }
@@ -652,6 +655,17 @@ namespace KinaUnaMediaApi.Controllers
             await _context.SaveChangesAsync();
             await _dataService.SetPicture(model.PictureId);
 
+            Progeny prog = await _dataService.GetProgeny(model.ProgenyId);
+            UserInfo userinfo = await _dataService.GetUserInfoByEmail(User.GetEmail());
+            string title = "New Photo added for " + prog.NickName;
+            string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " added a new photo for " + prog.NickName;
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = model.ProgenyId;
+            tItem.ItemId = model.PictureId.ToString();
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Photo;
+            tItem.AccessLevel = model.AccessLevel;
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
             return Ok(model);
         }
 
@@ -692,6 +706,17 @@ namespace KinaUnaMediaApi.Controllers
             _context.PicturesDb.Update(picture);
             await _context.SaveChangesAsync();
             await _dataService.SetPicture(picture.PictureId);
+
+            Progeny prog = await _dataService.GetProgeny(picture.ProgenyId);
+            UserInfo userinfo = await _dataService.GetUserInfoByEmail(User.GetEmail());
+            string title = "Photo Edited for " + prog.NickName;
+            string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " edited a photo for " + prog.NickName;
+            TimeLineItem tItem = new TimeLineItem();
+            tItem.ProgenyId = picture.ProgenyId;
+            tItem.ItemId = picture.PictureId.ToString();
+            tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Photo;
+            tItem.AccessLevel = picture.AccessLevel;
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
 
             return Ok(picture);
         }
@@ -744,6 +769,17 @@ namespace KinaUnaMediaApi.Controllers
 
                 await _dataService.RemovePicture(picture.PictureId, picture.ProgenyId);
 
+                Progeny prog = await _dataService.GetProgeny(picture.ProgenyId);
+                UserInfo userinfo = await _dataService.GetUserInfoByEmail(User.GetEmail());
+                string title = "Photo deleted for " + prog.NickName;
+                string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " deleted a photo for " + prog.NickName;
+                TimeLineItem tItem = new TimeLineItem();
+                tItem.ProgenyId = picture.ProgenyId;
+                tItem.ItemId = picture.PictureId.ToString();
+                tItem.ItemType = (int)KinaUnaTypes.TimeLineType.Photo;
+                tItem.AccessLevel = 0;
+                await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
                 return NoContent();
             }
             else
@@ -760,14 +796,14 @@ namespace KinaUnaMediaApi.Controllers
         {
             // Check if user should be allowed access.
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail);
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); // _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
             if (userAccess == null && progenyId != Constants.DefaultChildId)
             {
                 return Unauthorized();
             }
 
-            List<Picture> picturesList = await _dataService.GetPicturesList(progenyId); 
+            List<Picture> picturesList = await _dataService.GetPicturesList(progenyId); // await _context.PicturesDb.Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel).ToListAsync();
             picturesList = picturesList.Where(p => p.AccessLevel >= accessLevel).ToList();
             if (picturesList.Any())
             {
@@ -803,14 +839,14 @@ namespace KinaUnaMediaApi.Controllers
         {
             // Check if user should be allowed access.
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); // _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == progenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
             if (userAccess == null && progenyId != Constants.DefaultChildId)
             {
                 return Unauthorized();
             }
 
-            List<Picture> picturesList = await _dataService.GetPicturesList(progenyId); 
+            List<Picture> picturesList = await _dataService.GetPicturesList(progenyId); // await _context.PicturesDb.Where(p => p.ProgenyId == progenyId && p.AccessLevel >= accessLevel).ToListAsync();
             picturesList = picturesList.Where(p => p.AccessLevel >= accessLevel).ToList();
             if (picturesList.Any())
             {
@@ -851,12 +887,12 @@ namespace KinaUnaMediaApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetPictureMobile(int id)
         {
-            Picture result = await _dataService.GetPicture(id); 
+            Picture result = await _dataService.GetPicture(id); // await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureId == id);
             if (result != null)
             {
                 // Check if user should be allowed access.
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
+                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); // _progenyDbContext.UserAccessDb.AsNoTracking().SingleOrDefault(u => u.ProgenyId == result.ProgenyId && u.UserId.ToUpper() == userEmail.ToUpper());
 
                 if (userAccess == null && result.ProgenyId != Constants.DefaultChildId)
                 {
@@ -926,7 +962,6 @@ namespace KinaUnaMediaApi.Controllers
                     }
                 }
             }
-
             if (!string.IsNullOrEmpty(tagFilter))
             {
 
@@ -957,6 +992,7 @@ namespace KinaUnaMediaApi.Controllers
                 }
 
                 pictureCounter++;
+
             }
 
             var itemsOnPage = allItems
@@ -1006,7 +1042,7 @@ namespace KinaUnaMediaApi.Controllers
             {
                 // Check if user should be allowed access.
                 string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(picture.ProgenyId, userEmail); 
+                UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(picture.ProgenyId, userEmail);
 
                 if (userAccess == null && picture.ProgenyId != Constants.DefaultChildId)
                 {
@@ -1033,10 +1069,10 @@ namespace KinaUnaMediaApi.Controllers
                 model.Altitude = picture.Altitude;
                 model.PictureNumber = 1;
                 model.PictureCount = 1;
-                model.CommentsList = await _dataService.GetCommentsList(picture.CommentThreadNumber);
+                model.CommentsList = await _dataService.GetCommentsList(picture.CommentThreadNumber); // await _context.CommentsDb.Where(c => c.CommentThreadNumber == picture.CommentThreadNumber).ToListAsync();
                 model.TagsList = "";
                 List<string> tagsList = new List<string>();
-                List<Picture> pictureList = await _dataService.GetPicturesList(picture.ProgenyId);
+                List<Picture> pictureList = await _dataService.GetPicturesList(picture.ProgenyId); // await _context.PicturesDb.AsNoTracking()
                 pictureList = pictureList.Where(p => p.AccessLevel >= accessLevel).OrderBy(p => p.PictureTime).ToList();
                 if (pictureList.Any())
                 {
@@ -1427,7 +1463,7 @@ namespace KinaUnaMediaApi.Controllers
             {
                 if (!id.ToLower().StartsWith("http"))
                 {
-                    result = _imageStore.UriFor(id, BlobContainers.Profiles);
+                    result = _imageStore.UriFor(id, "profiles");
                 }
             }
 
@@ -1536,6 +1572,8 @@ namespace KinaUnaMediaApi.Controllers
             autoSuggestList.Sort();
             return Ok(autoSuggestList);
         }
+
+
 
         // Download pictures to StorageBlob from Url
         [HttpGet]

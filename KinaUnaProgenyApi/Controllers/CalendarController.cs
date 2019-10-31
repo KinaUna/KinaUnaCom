@@ -21,12 +21,13 @@ namespace KinaUnaProgenyApi.Controllers
     {
         private readonly ProgenyDbContext _context;
         private readonly IDataService _dataService;
+        private readonly AzureNotifications _azureNotifications;
 
-        public CalendarController(IDataService dataService, ProgenyDbContext context)
+        public CalendarController(IDataService dataService, ProgenyDbContext context, AzureNotifications azureNotifications)
         {
             _context = context;
             _dataService = dataService;
-
+            _azureNotifications = azureNotifications;
         }
 
         // GET api/calendar/progeny/[id]
@@ -53,10 +54,10 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCalendarItem(int id)
         {
-            CalendarItem result = await _dataService.GetCalendarItem(id); 
+            CalendarItem result = await _dataService.GetCalendarItem(id);
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail);
             if (userAccess != null || id == Constants.DefaultChildId)
             {
                 return Ok(result);
@@ -122,6 +123,11 @@ namespace KinaUnaProgenyApi.Controllers
             await _context.SaveChangesAsync();
             await _dataService.SetTimeLineItem(tItem.TimeLineId);
             await _dataService.SetCalendarItem(calendarItem.EventId);
+
+            string title = "Calendar item added for " + prog.NickName;
+            string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " added a new calendar item for " + prog.NickName;
+
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
             return Ok(calendarItem);
         }
 
@@ -177,6 +183,12 @@ namespace KinaUnaProgenyApi.Controllers
                 await _dataService.SetTimeLineItem(tItem.TimeLineId);
             }
             await _dataService.SetCalendarItem(calendarItem.EventId);
+
+            UserInfo userinfo = await _dataService.GetUserInfoByEmail(userEmail);
+            string title = "Calendar edited for " + prog.NickName;
+            string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " edited a calendar item for " + prog.NickName;
+            await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
             return Ok(calendarItem);
         }
 
@@ -187,12 +199,13 @@ namespace KinaUnaProgenyApi.Controllers
             CalendarItem calendarItem = await _context.CalendarDb.SingleOrDefaultAsync(c => c.EventId == id);
             if (calendarItem != null)
             {
+                string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
                 // Check if child exists.
                 Progeny prog = await _context.ProgenyDb.SingleOrDefaultAsync(p => p.Id == calendarItem.ProgenyId);
                 if (prog != null)
                 {
                     // Check if user is allowed to edit calendar items for this child.
-                    string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
+
                     if (!prog.IsInAdminList(userEmail))
                     {
                         return Unauthorized();
@@ -215,6 +228,14 @@ namespace KinaUnaProgenyApi.Controllers
                 _context.CalendarDb.Remove(calendarItem);
                 await _context.SaveChangesAsync();
                 await _dataService.RemoveCalendarItem(calendarItem.EventId, calendarItem.ProgenyId);
+
+
+                UserInfo userinfo = await _dataService.GetUserInfoByEmail(userEmail);
+                string title = "Calendar item deleted for " + prog.NickName;
+                string message = userinfo.FirstName + " " + userinfo.MiddleName + " " + userinfo.LastName + " deleted a calendar item for " + prog.NickName;
+                tItem.AccessLevel = 0;
+                await _azureNotifications.ProgenyUpdateNotification(title, message, tItem, userinfo.ProfilePicture);
+
                 return NoContent();
             }
             else
@@ -228,7 +249,7 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> EventList(int progenyId, int accessLevel)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(progenyId, userEmail);
 
             if (userAccess != null || progenyId == Constants.DefaultChildId)
             {
@@ -246,10 +267,10 @@ namespace KinaUnaProgenyApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetItemMobile(int id)
         {
-            CalendarItem result = await _dataService.GetCalendarItem(id); 
+            CalendarItem result = await _dataService.GetCalendarItem(id);
 
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(result.ProgenyId, userEmail);
             if (userAccess != null)
             {
                 return Ok(result);
@@ -263,10 +284,10 @@ namespace KinaUnaProgenyApi.Controllers
         public async Task<IActionResult> ProgenyMobile(int id, int accessLevel = 5)
         {
             string userEmail = User.GetEmail() ?? Constants.DefaultUserEmail;
-            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail); 
+            UserAccess userAccess = await _dataService.GetProgenyUserAccessForUser(id, userEmail);
             if (userAccess != null)
             {
-                List<CalendarItem> calendarList = await _dataService.GetCalendarList(id); 
+                List<CalendarItem> calendarList = await _dataService.GetCalendarList(id);
                 calendarList = calendarList.Where(c => c.AccessLevel >= accessLevel).ToList();
                 if (calendarList.Any())
                 {
