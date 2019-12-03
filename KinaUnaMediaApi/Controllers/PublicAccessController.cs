@@ -31,7 +31,7 @@ namespace KinaUnaMediaApi.Controllers
         [Route("[action]/{progenyId}/{accessLevel}")]
         public async Task<IActionResult> RandomPictureMobile(int progenyId, int accessLevel)
         {
-            List<Picture> picturesList = await _dataService.GetPicturesList(Constants.DefaultChildId);
+            List<Picture> picturesList = await _dataService.GetPicturesList(Constants.DefaultChildId); // await _context.PicturesDb.Where(p => p.ProgenyId == 2 && p.AccessLevel >= 5).ToListAsync();
             picturesList = picturesList.Where(p => p.AccessLevel >= 5).ToList();
             if (picturesList.Any())
             {
@@ -71,7 +71,7 @@ namespace KinaUnaMediaApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetPictureMobile(int id)
         {
-            Picture result = await _dataService.GetPicture(id); 
+            Picture result = await _dataService.GetPicture(id); // await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureId == id);
             if (result != null)
             {
                 if (result.ProgenyId == Constants.DefaultChildId)
@@ -119,12 +119,12 @@ namespace KinaUnaMediaApi.Controllers
             List<Picture> allItems;
             if (!string.IsNullOrEmpty(tagFilter))
             {
-                allItems = await _dataService.GetPicturesList(Constants.DefaultChildId); 
+                allItems = await _dataService.GetPicturesList(Constants.DefaultChildId); // await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == 2 && p.AccessLevel >= 5 && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToListAsync();
                 allItems = allItems.Where(p => p.AccessLevel >= 5 && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.PictureTime).ToList();
             }
             else
             {
-                allItems = await _dataService.GetPicturesList(2); 
+                allItems = await _dataService.GetPicturesList(2); // await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == 2 && p.AccessLevel >= 5).OrderBy(p => p.PictureTime).ToListAsync();
                 allItems = allItems.Where(p => p.AccessLevel >= 5).OrderBy(p => p.PictureTime).ToList();
             }
 
@@ -168,7 +168,7 @@ namespace KinaUnaMediaApi.Controllers
 
             foreach (Picture pic in itemsOnPage)
             {
-                pic.Comments = await _dataService.GetCommentsList(pic.CommentThreadNumber);
+                pic.Comments = await _dataService.GetCommentsList(pic.CommentThreadNumber); // await _context.CommentsDb.AsNoTracking().Where(c => c.CommentThreadNumber == pic.CommentThreadNumber).ToListAsync();
                 if (!pic.PictureLink.ToLower().StartsWith("http"))
                 {
                     pic.PictureLink = _imageStore.UriFor(pic.PictureLink);
@@ -203,7 +203,7 @@ namespace KinaUnaMediaApi.Controllers
         public async Task<IActionResult> PictureViewModelMobile(int id, int accessLevel, [FromQuery] int sortBy = 1)
         {
 
-            Picture picture = await _dataService.GetPicture(id);
+            Picture picture = await _dataService.GetPicture(id); // await _context.PicturesDb.AsNoTracking().SingleOrDefaultAsync(p => p.PictureId == id);
 
             if (picture != null)
             {
@@ -232,10 +232,10 @@ namespace KinaUnaMediaApi.Controllers
                 model.Altitude = picture.Altitude;
                 model.PictureNumber = 1;
                 model.PictureCount = 1;
-                model.CommentsList = await _dataService.GetCommentsList(picture.CommentThreadNumber);
+                model.CommentsList = await _dataService.GetCommentsList(picture.CommentThreadNumber); // await _context.CommentsDb.Where(c => c.CommentThreadNumber == picture.CommentThreadNumber).ToListAsync();
                 model.TagsList = "";
                 List<string> tagsList = new List<string>();
-                List<Picture> pictureList = await _dataService.GetPicturesList(picture.ProgenyId); 
+                List<Picture> pictureList = await _dataService.GetPicturesList(picture.ProgenyId); // await _context.PicturesDb.AsNoTracking()
                 pictureList = pictureList.Where(p => p.AccessLevel >= accessLevel).OrderBy(p => p.PictureTime).ToList();
                 if (pictureList.Any())
                 {
@@ -310,7 +310,7 @@ namespace KinaUnaMediaApi.Controllers
         [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetVideoMobile(int id)
         {
-            Video result = await _dataService.GetVideo(id);
+            Video result = await _dataService.GetVideo(id); // await _context.VideoDb.SingleOrDefaultAsync(v => v.VideoId == id);
             if (result.ProgenyId == Constants.DefaultChildId)
             {
                 return Ok(result);
@@ -334,12 +334,12 @@ namespace KinaUnaMediaApi.Controllers
             List<Video> allItems;
             if (tagFilter != "")
             {
-                allItems = await _dataService.GetVideosList(Constants.DefaultChildId); 
+                allItems = await _dataService.GetVideosList(Constants.DefaultChildId); // await _context.VideoDb.Where(p => p.ProgenyId == 2 && p.AccessLevel >= 5 && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.VideoTime).ToListAsync();
                 allItems = allItems.Where(p => p.AccessLevel >= 5 && p.Tags.ToUpper().Contains(tagFilter.ToUpper())).OrderBy(p => p.VideoTime).ToList();
             }
             else
             {
-                allItems = await _dataService.GetVideosList(Constants.DefaultChildId); 
+                allItems = await _dataService.GetVideosList(Constants.DefaultChildId); //await _context.VideoDb.Where(p => p.ProgenyId == 2 && p.AccessLevel >= 5).OrderBy(p => p.VideoTime).ToListAsync();
                 allItems = allItems.Where(p => p.AccessLevel >= 5).OrderBy(p => p.VideoTime).ToList();
             }
 
@@ -421,12 +421,124 @@ namespace KinaUnaMediaApi.Controllers
         }
 
         [HttpGet]
+        [Route("[action]/{id}/{accessLevel}")]
+        public async Task<IActionResult> VideoViewModelMobile(int id, int accessLevel, [FromQuery] int sortBy = 1)
+        {
+
+            Video video = await _dataService.GetVideo(id);
+
+            if (video != null)
+            {
+                if (video.ProgenyId != Constants.DefaultChildId)
+                {
+                    return NotFound();
+                }
+
+                VideoViewModel model = new VideoViewModel();
+                model.VideoId = video.VideoId;
+                model.VideoType = video.VideoType;
+                model.VideoTime = video.VideoTime;
+                model.Duration = video.Duration;
+                model.ProgenyId = video.ProgenyId;
+                model.Owners = video.Owners;
+                model.VideoLink = video.VideoLink;
+                model.ThumbLink = video.ThumbLink;
+                model.AccessLevel = video.AccessLevel;
+                model.Author = video.Author;
+                model.AccessLevelListEn[video.AccessLevel].Selected = true;
+                model.AccessLevelListDa[video.AccessLevel].Selected = true;
+                model.AccessLevelListDe[video.AccessLevel].Selected = true;
+                model.CommentThreadNumber = video.CommentThreadNumber;
+                model.Tags = video.Tags;
+                model.VideoNumber = 1;
+                model.VideoCount = 1;
+                model.CommentsList = await _dataService.GetCommentsList(video.CommentThreadNumber);
+                model.Location = video.Location;
+                model.Longtitude = video.Longtitude;
+                model.Latitude = video.Latitude;
+                model.Altitude = video.Latitude;
+                model.TagsList = "";
+                List<string> tagsList = new List<string>();
+                List<Video> videosList = await _dataService.GetVideosList(video.ProgenyId);
+                videosList = videosList.Where(p => p.AccessLevel >= accessLevel).OrderBy(p => p.VideoTime).ToList();
+                if (videosList.Any())
+                {
+                    int currentIndex = 0;
+                    int indexer = 0;
+                    foreach (Video vid in videosList)
+                    {
+                        if (vid.VideoId == video.VideoId)
+                        {
+                            currentIndex = indexer;
+                        }
+                        indexer++;
+                        if (!String.IsNullOrEmpty(vid.Tags))
+                        {
+                            List<string> pvmTags = vid.Tags.Split(',').ToList();
+                            foreach (string tagstring in pvmTags)
+                            {
+                                if (!tagsList.Contains(tagstring.TrimStart(' ', ',').TrimEnd(' ', ',')))
+                                {
+                                    tagsList.Add(tagstring.TrimStart(' ', ',').TrimEnd(' ', ','));
+                                }
+                            }
+                        }
+                    }
+                    model.VideoNumber = currentIndex + 1;
+                    model.VideoCount = videosList.Count;
+                    if (currentIndex > 0)
+                    {
+                        model.PrevVideo = videosList[currentIndex - 1].VideoId;
+                    }
+                    else
+                    {
+                        model.PrevVideo = videosList.Last().VideoId;
+                    }
+
+                    if (currentIndex + 1 < videosList.Count)
+                    {
+                        model.NextVideo = videosList[currentIndex + 1].VideoId;
+                    }
+                    else
+                    {
+                        model.NextVideo = videosList.First().VideoId;
+                    }
+
+                    if (sortBy == 1)
+                    {
+                        int tempVal = model.NextVideo;
+                        model.NextVideo = model.PrevVideo;
+                        model.PrevVideo = tempVal;
+                    }
+
+                }
+                string tagItems = "[";
+                if (tagsList.Any())
+                {
+                    foreach (string tagstring in tagsList)
+                    {
+                        tagItems = tagItems + "'" + tagstring + "',";
+                    }
+
+                    tagItems = tagItems.Remove(tagItems.Length - 1);
+                    tagItems = tagItems + "]";
+                }
+
+                model.TagsList = tagItems;
+
+                return Ok(model);
+            }
+
+            return NotFound();
+        }
+
+        [HttpGet]
         [Route("[action]/{id}")]
         public async Task<IActionResult> PictureTagsList(int id)
         {
             string tagListString = "";
             List<string> tagsList = new List<string>();
-            List<Picture> pictureList = await _dataService.GetPicturesList(id);
+            List<Picture> pictureList = await _dataService.GetPicturesList(id); // await _context.PicturesDb.AsNoTracking().Where(p => p.ProgenyId == id).ToListAsync();
             if (pictureList.Any())
             {
                 foreach (Picture pic in pictureList)
