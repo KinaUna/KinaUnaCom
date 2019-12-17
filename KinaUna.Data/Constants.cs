@@ -8,6 +8,7 @@
         public const string AuthAppUrl = "https://kinaunademoauth.azurewebsites.net"; // Url of Auth App, find it in Azure portal in the App Service's overview.
         public const string ProgenyApiUrl = "https://kinaunademoprogeny.azurewebsites.net"; // // Url of Progeny App, find it in Azure portal in the App Service's overview.
         public const string MediaApiUrl = "https://kinaunademomedia.azurewebsites.net"; // Url of Media App, find it in Azure portal in the App Service's overview.
+        public const string SupportUrl = "https://kinaunademosupport.azurewebsites.net";
         public const string AppRootDomain = "azurewebsites.net";
         public const string SmtpServer = "smtp.office365.com"; // Mail server address.
         public const string SmtpUsername = "support@kinauna.com"; // Mail server user name.
