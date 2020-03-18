@@ -7,10 +7,10 @@ using KinaUnaProgenyApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace KinaUnaProgenyApi
 {
@@ -33,13 +33,7 @@ namespace KinaUnaProgenyApi
             services.AddScoped<AzureNotifications>();
 
             services.AddDbContext<ProgenyDbContext>(options =>
-                options.UseSqlServer(Configuration["ProgenyDefaultConnection"],
-                    sqlServerOptionsAction: sqlOptions =>
-                    {
-                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
-                        //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
-                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
-                    }));
+                options.UseSqlServer(Configuration["ProgenyDefaultConnection"]));
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration["DataProtectionConnection"],
@@ -55,7 +49,8 @@ namespace KinaUnaProgenyApi
 
             services.AddScoped<IDataService, DataService>();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            // services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddControllers().AddNewtonsoftJson();
 
             services.AddAuthorization(authorizationOptions =>
             {
@@ -71,7 +66,7 @@ namespace KinaUnaProgenyApi
             });
 
             services.AddScoped<IAuthorizationHandler, MustBeAdminHandler>();
-            
+
             services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
                 .AddIdentityServerAuthentication(options =>
                 {
@@ -82,7 +77,7 @@ namespace KinaUnaProgenyApi
                 });
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -92,12 +87,14 @@ namespace KinaUnaProgenyApi
             {
                 app.UseHsts();
             }
-            
+
+            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseRouting();
+            app.UseAuthorization();
+            //app.UseMvc();
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
-
-        
     }
 }
