@@ -29,7 +29,6 @@ namespace KinaUna.IDP
     {
         private IConfiguration Configuration { get; }
         private readonly IWebHostEnvironment _env;
-        private readonly ILoggerFactory _loggerFactory;
 
         public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
@@ -77,7 +76,7 @@ namespace KinaUna.IDP
                         //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
                         sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                     }));
-            
+
             var credentials = new StorageCredentials(Constants.CloudBlobUsername, Configuration["BlobStorageKey"]);
             CloudBlobClient blobClient = new CloudBlobClient(new Uri(Constants.CloudBlobBase), credentials);
             CloudBlobContainer container = blobClient.GetContainerReference("dataprotection");
@@ -144,21 +143,19 @@ namespace KinaUna.IDP
             {
                 services.AddCors(options =>
                 {
+                    options.AddDefaultPolicy(builder =>
+                    {
+                        builder.WithOrigins(Constants.WebAppUrl, "https://" + Constants.AppRootDomain);
+                    });
                     options.AddPolicy("KinaUnaCors",
                         builder =>
                         {
                             builder.WithOrigins("https://*." + Constants.AppRootDomain).SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                         });
                 });
-                var cors = new DefaultCorsPolicyService(_loggerFactory.CreateLogger<DefaultCorsPolicyService>())
-                {
-                    AllowedOrigins = { Constants.WebAppUrl, "https://" + Constants.AppRootDomain }
-                };
-                services.AddSingleton<ICorsPolicyService>(cors);
             }
 
 
-            //services.AddMvc().AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix);
             services.AddControllersWithViews()
                 .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix);
 
@@ -235,7 +232,6 @@ namespace KinaUna.IDP
             app.UseRouting();
             app.UseCors("KinaUnaCors");
             app.UseIdentityServer();
-            // app.UseMvcWithDefaultRoute();
             app.UseEndpoints(endpoints => {
                 endpoints.MapDefaultControllerRoute();
             });
