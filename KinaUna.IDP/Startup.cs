@@ -4,14 +4,13 @@ using IdentityServer4.Services;
 using KinaUna.IDP.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
@@ -21,33 +20,26 @@ using System.Security.Cryptography.X509Certificates;
 using KinaUna.Data;
 using KinaUna.Data.Contexts;
 using KinaUna.Data.Models;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Storage.Auth;
+using Microsoft.Azure.Storage.Blob;
 
 namespace KinaUna.IDP
 {
     public class Startup
     {
         private IConfiguration Configuration { get; }
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly ILoggerFactory _loggerFactory;
 
-        public Startup(IConfiguration configuration, IHostingEnvironment environment, ILoggerFactory loggerFactory)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
             _env = environment;
-            _loggerFactory = loggerFactory;
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => false;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
 
             services.AddDbContext<ProgenyDbContext>(options =>
                 options.UseSqlServer(Configuration["ProgenyDefaultConnection"],
@@ -86,23 +78,33 @@ namespace KinaUna.IDP
                         sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                     }));
 
-            services.AddSingleton<IXmlRepository, DataProtectionKeyRepository>();
+            // services.AddSingleton<IXmlRepository, DataProtectionKeyRepository>();
 
-            var built = services.BuildServiceProvider();
-            services.AddDataProtection().AddKeyManagementOptions(options => options.XmlRepository = built.GetService<IXmlRepository>()).SetApplicationName("KinaUnaWebApp");
+            //var built = services.BuildServiceProvider();
+            //services.AddDataProtection().AddKeyManagementOptions(options => options.XmlRepository = built.GetService<IXmlRepository>()).SetApplicationName("KinaUnaWebApp");
+
+            var credentials = new StorageCredentials(Constants.CloudBlobUsername, Configuration["BlobStorageKey"]);
+            CloudBlobClient blobClient = new CloudBlobClient(new Uri(Constants.CloudBlobBase), credentials);
+            CloudBlobContainer container = blobClient.GetContainerReference("dataprotection");
+
+            container.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+
+            services.AddDataProtection()
+                .SetApplicationName("KinaUnaWebApp")
+                .PersistKeysToAzureBlobStorage(container, "kukeys.xml");
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-                {
-                    options.Password.RequireNonAlphanumeric = false;
-                    options.Password.RequireUppercase = false;
-                    options.Password.RequireLowercase = false;
-                    options.Password.RequireDigit = false;
-                    options.SignIn.RequireConfirmedEmail = true;
-                    options.User.RequireUniqueEmail = true;
-                })
+            {
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireDigit = false;
+                options.SignIn.RequireConfirmedEmail = true;
+                options.User.RequireUniqueEmail = true;
+            })
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
-            
+
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
                 options.TokenLifespan = TimeSpan.FromDays(90);
@@ -116,7 +118,7 @@ namespace KinaUna.IDP
             {
                 o.ResourcesPath = "Resources";
             });
-            
+
             X509Certificate2 cert = null;
             using (X509Store certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser))
             {
@@ -139,7 +141,7 @@ namespace KinaUna.IDP
                     options.AddPolicy("KinaUnaCors",
                         builder =>
                         {
-                            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+                            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
                         });
                 });
             }
@@ -150,18 +152,26 @@ namespace KinaUna.IDP
                     options.AddPolicy("KinaUnaCors",
                         builder =>
                         {
-                            builder.WithOrigins(Constants.WebAppUrl).SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+                            builder.WithOrigins("https://*." + Constants.AppRootDomain).SetIsOriginAllowedToAllowWildcardSubdomains().AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                         });
                 });
+                var cors = new DefaultCorsPolicyService(_loggerFactory.CreateLogger<DefaultCorsPolicyService>())
+                {
+                    AllowedOrigins = { Constants.WebAppUrl, "https://" + Constants.AppRootDomain }
+                };
+                services.AddSingleton<ICorsPolicyService>(cors);
             }
 
-            services.AddMvc().AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix);
+
+            //services.AddMvc().AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix);
+            services.AddControllersWithViews()
+                .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix);
 
             services.AddIdentityServer(x =>
-                {
-                    x.Authentication.CookieLifetime = TimeSpan.FromDays(90);
-                    x.Authentication.CookieSlidingExpiration = true;
-                })
+            {
+                x.Authentication.CookieLifetime = TimeSpan.FromDays(90);
+                x.Authentication.CookieSlidingExpiration = true;
+            })
                 .AddSigningCredential(cert)
                 .AddAspNetIdentity<ApplicationUser>()
                 // This adds the config data from DB (clients, resources)
@@ -181,7 +191,8 @@ namespace KinaUna.IDP
                     // This enables automatic token cleanup. this is optional.
                     options.EnableTokenCleanup = true;
                     options.TokenCleanupInterval = 21600;
-                }).AddRedisCaching(options =>
+                })
+                .AddRedisCaching(options =>
                 {
                     options.RedisConnectionString = Configuration["RedisConnection"];
                     options.KeyPrefix = Constants.AppName + "idp";
@@ -191,9 +202,10 @@ namespace KinaUna.IDP
                 .AddCorsPolicyCache<IdentityServer4.EntityFramework.Services.CorsPolicyService>()
                 .AddProfileServiceCache<ProfileService>()
                 .Services.AddTransient<IProfileService, ProfileService>();
+
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment hostingEnvironment
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment hostingEnvironment
             )
         {
             // This will do the initial DB population
@@ -203,7 +215,6 @@ namespace KinaUna.IDP
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseCors("KinaUnaCors");
 
             var supportedCultures = new[]
             {
@@ -223,11 +234,16 @@ namespace KinaUna.IDP
                 CookieName = Constants.LanguageCookieName
             };
             localizationOptions.RequestCultureProviders.Insert(0, provider);
-            
+
             app.UseRequestLocalization(localizationOptions);
-            app.UseIdentityServer();
             app.UseStaticFiles();
-            app.UseMvcWithDefaultRoute();
+            app.UseRouting();
+            app.UseCors("KinaUnaCors");
+            app.UseIdentityServer();
+            // app.UseMvcWithDefaultRoute();
+            app.UseEndpoints(endpoints => {
+                endpoints.MapDefaultControllerRoute();
+            });
         }
 
         private void InitializeDatabase(IApplicationBuilder app, bool resetDb)
@@ -274,17 +290,17 @@ namespace KinaUna.IDP
                     }
                     context.SaveChanges();
                 }
-                
+
                 if (!context.IdentityResources.Any())
                 {
                     foreach (var resource in Config.GetIdentityResources())
                     {
                         context.IdentityResources.Add(resource.ToEntity());
-                        
+
                     }
                     context.SaveChanges();
                 }
-                
+
 
                 if (!context.ApiResources.Any())
                 {

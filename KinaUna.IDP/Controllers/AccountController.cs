@@ -2,7 +2,6 @@
 using IdentityServer4;
 using IdentityServer4.Models;
 using IdentityServer4.Services;
-using KinaUna.Data.Models;
 using KinaUna.IDP.Extensions;
 using KinaUna.IDP.Models;
 using KinaUna.IDP.Models.AccountViewModels;
@@ -21,10 +20,13 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using KinaUna.Data.Contexts;
+using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Extensions.Configuration;
 using KinaUna.Data;
 using KinaUna.Data.Extensions;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace KinaUna.IDP.Controllers
 {
@@ -41,6 +43,7 @@ namespace KinaUna.IDP.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ProgenyDbContext _progContext;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
         public AccountController(
             ILoginService<ApplicationUser> loginService,
@@ -51,7 +54,8 @@ namespace KinaUna.IDP.Controllers
             SignInManager<ApplicationUser> signInManager,
             ApplicationDbContext context,
             ProgenyDbContext progContext,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IWebHostEnvironment env)
         {
             _loginService = loginService;
             _interaction = interaction;
@@ -63,6 +67,7 @@ namespace KinaUna.IDP.Controllers
             _context = context;
             _progContext = progContext;
             _configuration = configuration;
+            _env = env;
         }
 
         [TempData] private string StatusMessage { get; set; }
@@ -101,7 +106,7 @@ namespace KinaUna.IDP.Controllers
                 if (await _loginService.ValidateCredentials(user, model.Password))
                 {
                     await _loginService.SignIn(user);
-                   
+
                     // make sure the returnUrl is still valid, and if yes - redirect back to authorize endpoint
                     if (_interaction.IsValidReturnUrl(model.ReturnUrl))
                     {
@@ -149,11 +154,22 @@ namespace KinaUna.IDP.Controllers
             if (User.Identity.IsAuthenticated == false)
             {
                 // if the user is not authenticated, then just show logged out page
-                return await Logout(new LogoutViewModel { LogoutId = logoutId });
+                //return await Logout(new LogoutViewModel { LogoutId = logoutId });
+                string logoutRedirectUri;
+                if (_env.IsDevelopment())
+                {
+                    logoutRedirectUri = _configuration.GetValue<string>("WebServerLocal");
+                }
+                else
+                {
+                    logoutRedirectUri = _configuration.GetValue<string>("WebServer");
+                }
+                return Redirect(logoutRedirectUri);
             }
 
             //Test for Xamarin. 
             var context = await _interaction.GetLogoutContextAsync(logoutId);
+
             if (context?.ShowSignoutPrompt == false)
             {
                 //it's safe to automatically sign-out
@@ -192,7 +208,7 @@ namespace KinaUna.IDP.Controllers
 
                 try
                 {
-                    
+
                     // hack: try/catch to handle social providers that throw
                     await HttpContext.SignOutAsync(idp, new AuthenticationProperties
                     {
@@ -215,10 +231,17 @@ namespace KinaUna.IDP.Controllers
             var logout = await _interaction.GetLogoutContextAsync(model.LogoutId);
             if (logout.PostLogoutRedirectUri == null)
             {
-                logout.PostLogoutRedirectUri = _configuration.GetValue<string>("WebServer"); // Todo: if Dev env use WebServerLocal
+                if (_env.IsDevelopment())
+                {
+                    logout.PostLogoutRedirectUri = _configuration.GetValue<string>("WebServerLocal");
+                }
+                else
+                {
+                    logout.PostLogoutRedirectUri = _configuration.GetValue<string>("WebServer");
+                }
             }
             return Redirect(logout.PostLogoutRedirectUri);
-            
+
         }
 
         public async Task<IActionResult> DeviceLogOut(string redirectUrl)
@@ -287,7 +310,7 @@ namespace KinaUna.IDP.Controllers
                 {
                     user.TimeZone = (await _userManager.FindByEmailAsync(Constants.AdminEmail)).TimeZone;
                 }
-                
+
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Errors.Count() > 0)
                 {
@@ -301,7 +324,7 @@ namespace KinaUna.IDP.Controllers
                 await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl, model.Language);
                 await _emailSender.SendEmailAsync(Constants.AdminEmail, "New User Registered",
                     "A user registered with this email address: " + model.Email);
-                
+
             }
 
             if (returnUrl != null)
@@ -335,7 +358,7 @@ namespace KinaUna.IDP.Controllers
         [HttpPost]
         public async Task<IActionResult> ChangeEmail(string NewEmail, string OldEmail, string Language = "en")
         {
-            
+
             if (User.Identity.IsAuthenticated)
             {
                 ApplicationUser user = await _context.Users.SingleOrDefaultAsync(u => u.Email.ToUpper() == OldEmail.ToUpper());
@@ -369,7 +392,7 @@ namespace KinaUna.IDP.Controllers
             }
 
             return RedirectToAction("Register");
-            
+
 
         }
 
@@ -382,7 +405,7 @@ namespace KinaUna.IDP.Controllers
                 ApplicationUser user = await _context.Users.SingleOrDefaultAsync(u => u.Id == UserId);
                 ApplicationUser test =
                     await _context.Users.SingleOrDefaultAsync(u => u.Email.ToUpper() == NewEmail.ToUpper());
-                
+
                 if (user.Id == UserId)
                 {
                     if (test != null)
@@ -458,7 +481,7 @@ namespace KinaUna.IDP.Controllers
 
                 if (!String.IsNullOrEmpty(oldEmail))
                 {
-                    
+
                     // Todo: use api to update access lists instead.
                     List<UserAccess> userAccessList = await _progContext.UserAccessDb.Where(u => u.UserId.ToUpper() == oldEmail.ToUpper()).ToListAsync();
                     if (userAccessList.Any())
@@ -490,7 +513,7 @@ namespace KinaUna.IDP.Controllers
                     await _emailSender.SendEmailAsync(Constants.AdminEmail, "New User Confirmed Email",
                         "A user confirmed the email with this email address: " + user.Email);
                 }
-                
+
                 return View();
             }
 
@@ -611,7 +634,7 @@ namespace KinaUna.IDP.Controllers
             {
                 throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
-            
+
             var model = new ChangePasswordViewModel { StatusMessage = StatusMessage };
             return View(model);
         }
