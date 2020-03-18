@@ -77,12 +77,7 @@ namespace KinaUna.IDP
                         //Configuring Connection Resiliency: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency 
                         sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                     }));
-
-            // services.AddSingleton<IXmlRepository, DataProtectionKeyRepository>();
-
-            //var built = services.BuildServiceProvider();
-            //services.AddDataProtection().AddKeyManagementOptions(options => options.XmlRepository = built.GetService<IXmlRepository>()).SetApplicationName("KinaUnaWebApp");
-
+            
             var credentials = new StorageCredentials(Constants.CloudBlobUsername, Configuration["BlobStorageKey"]);
             CloudBlobClient blobClient = new CloudBlobClient(new Uri(Constants.CloudBlobBase), credentials);
             CloudBlobContainer container = blobClient.GetContainerReference("dataprotection");
