@@ -15,6 +15,7 @@ using KinaUna.Data;
 using KinaUna.Data.Extensions;
 using KinaUna.Data.Models;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace KinaUnaWeb.Controllers
 {
@@ -25,10 +26,10 @@ namespace KinaUnaWeb.Controllers
         private readonly IProgenyHttpClient _progenyHttpClient;
         private readonly IMediaHttpClient _mediaHttpClient;
         private readonly ImageStore _imageStore;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly string _defaultUser = Constants.DefaultUserEmail;
-        
-        public HomeController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient, ImageStore imageStore, IHostingEnvironment env)
+
+        public HomeController(IProgenyHttpClient progenyHttpClient, IMediaHttpClient mediaHttpClient, ImageStore imageStore, IWebHostEnvironment env)
         {
             _progenyHttpClient = progenyHttpClient;
             _mediaHttpClient = mediaHttpClient;
@@ -60,22 +61,10 @@ namespace KinaUnaWeb.Controllers
             }
 
             Progeny progeny = await _progenyHttpClient.GetProgeny(_progId);
-            if (progeny == null)
-            {
-                progeny = new Progeny();
-                progeny.Admins = Constants.AdminEmail;
-                progeny.Id = Constants.DefaultChildId;
-                progeny.BirthDay = DateTime.UtcNow;
-                progeny.Name = Constants.AppName;
-                progeny.NickName = Constants.AppName;
-                progeny.TimeZone = Constants.DefaultTimezone;
-                progeny.PictureLink = Constants.ProfilePictureUrl;
-            }
-
             if (progeny.Name == "401")
             {
                 var returnUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-                return RedirectToAction("CheckOut", "Account", new{returnUrl});
+                return RedirectToAction("CheckOut", "Account", new { returnUrl });
             }
             List<UserAccess> accessList = await _progenyHttpClient.GetProgenyAccessList(_progId);
 
@@ -99,7 +88,7 @@ namespace KinaUnaWeb.Controllers
             {
                 progeny.BirthDay = DateTime.SpecifyKind(progeny.BirthDay.Value, DateTimeKind.Unspecified);
             }
-            
+
             HomeFeedViewModel feedModel = new HomeFeedViewModel();
             feedModel.UserAccessLevel = (int)AccessLevel.Public;
             if (accessList.Count != 0)
@@ -115,11 +104,11 @@ namespace KinaUnaWeb.Controllers
                     progeny = await _progenyHttpClient.GetProgeny(Constants.DefaultChildId);
                 }
             }
-            if (progeny.IsInAdminList(userEmail.ToUpper()))
+            if (progeny.IsInAdminList(userEmail))
             {
                 feedModel.UserAccessLevel = (int)AccessLevel.Private;
             }
-            
+
             BirthTime progBirthTime;
             if (!String.IsNullOrEmpty(progeny.NickName) && progeny.BirthDay.HasValue && feedModel.UserAccessLevel < (int)AccessLevel.Public)
             {
@@ -144,7 +133,7 @@ namespace KinaUnaWeb.Controllers
             feedModel.DaysMileStone = progBirthTime.CalcMileStoneDays();
             feedModel.WeeksMileStone = progBirthTime.CalcMileStoneWeeks();
 
-            
+
             Picture tempPicture = new Picture();
             tempPicture.ProgenyId = 0;
             tempPicture.Progeny = progeny;
@@ -204,9 +193,7 @@ namespace KinaUnaWeb.Controllers
             feedModel.PicMinutes = picTime.CalcMinutes();
             feedModel.Progeny = progeny;
             feedModel.EventsList = new List<CalendarItem>();
-            feedModel.EventsList = await _progenyHttpClient.GetUpcomingEvents(_progId, userAccessLevel); // _context.CalendarDb.AsNoTracking().Where(e => e.ProgenyId == progeny.Id && e.EndTime > DateTime.UtcNow && e.AccessLevel >= userAccessLevel).ToListAsync();
-            // feedModel.EventsList = feedModel.EventsList.OrderBy(e => e.StartTime).ToList();
-            // feedModel.EventsList = feedModel.EventsList.Take(5).ToList();
+            feedModel.EventsList = await _progenyHttpClient.GetUpcomingEvents(_progId, userAccessLevel);
             foreach (CalendarItem eventItem in feedModel.EventsList)
             {
                 if (eventItem.StartTime.HasValue && eventItem.EndTime.HasValue)
@@ -218,7 +205,7 @@ namespace KinaUnaWeb.Controllers
 
             feedModel.LatestPosts = new TimeLineViewModel();
             feedModel.LatestPosts.TimeLineItems = new List<TimeLineItem>();
-            feedModel.LatestPosts.TimeLineItems = await _progenyHttpClient.GetProgenyLatestPosts(_progId, userAccessLevel); // _context.TimeLineDb.AsNoTracking().Where(t => t.ProgenyId == _progId && t.AccessLevel >= userAccessLevel && t.ProgenyTime < DateTime.UtcNow).ToListAsync();
+            feedModel.LatestPosts.TimeLineItems = await _progenyHttpClient.GetProgenyLatestPosts(_progId, userAccessLevel);
             if (feedModel.LatestPosts.TimeLineItems.Any())
             {
                 feedModel.LatestPosts.TimeLineItems = feedModel.LatestPosts.TimeLineItems.OrderByDescending(t => t.ProgenyTime).Take(5).ToList();
@@ -247,7 +234,7 @@ namespace KinaUnaWeb.Controllers
         {
             return View();
         }
-        
+
 
         [AllowAnonymous]
         public IActionResult Privacy()
@@ -261,7 +248,7 @@ namespace KinaUnaWeb.Controllers
 
             return View();
         }
-        
+
         [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
@@ -279,7 +266,8 @@ namespace KinaUnaWeb.Controllers
                 userinfo.ViewChild = childId;
                 await _progenyHttpClient.SetViewChild(userId, userinfo);
             }
-            
+
+            // return Redirect(returnUrl);
             return RedirectToAction("Index", new { childId = childId });
         }
 
@@ -301,7 +289,7 @@ namespace KinaUnaWeb.Controllers
                 Response.Cookies.Append(
                     Constants.LanguageCookieName,
                     CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), Domain = "." + Constants.WebAppUrl.ToLower().Replace("https://", "") }
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1), Domain = "." + Constants.AppRootDomain }
                 );
             }
             return Redirect(returnUrl);
@@ -312,6 +300,6 @@ namespace KinaUnaWeb.Controllers
         {
             return Redirect(Constants.WebAppUrl);
         }
-        
+
     }
 }

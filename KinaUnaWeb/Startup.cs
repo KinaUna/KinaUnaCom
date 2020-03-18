@@ -6,13 +6,10 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +25,9 @@ using KinaUnaWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 using KinaUna.Data;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Azure.Storage.Auth;
+using Microsoft.Azure.Storage.Blob;
 
 namespace KinaUnaWeb
 {
@@ -35,26 +35,27 @@ namespace KinaUnaWeb
     {
         public IConfiguration Configuration { get; }
         public static string WebRootPath { get; private set; }
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
-        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
             _env = env;
             WebRootPath = env.WebRootPath;
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         }
-        
+
         public void ConfigureServices(IServiceCollection services)
         {
-            
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                // Todo: Fix consent to work with my cookies and language selection
                 options.CheckConsentNeeded = context => false;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
+                options.MinimumSameSitePolicy = SameSiteMode.Lax;
             });
-            
+
             services.AddDbContext<WebDbContext>(options =>
                 options.UseSqlServer(Configuration["WebDefaultConnection"],
                     sqlServerOptionsAction: sqlOptions =>
@@ -74,9 +75,15 @@ namespace KinaUnaWeb
                         sqlOptions.EnableRetryOnFailure(maxRetryCount: 15, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                     }));
 
-            services.AddSingleton<IXmlRepository, DataProtectionKeyRepository>();
-            var built = services.BuildServiceProvider();
-            services.AddDataProtection().AddKeyManagementOptions(options => options.XmlRepository = built.GetService<IXmlRepository>()).SetApplicationName("KinaUnaWebApp");
+            var credentials = new StorageCredentials(Constants.CloudBlobUsername, Configuration["BlobStorageKey"]);
+            CloudBlobClient blobClient = new CloudBlobClient(new Uri(Constants.CloudBlobBase), credentials);
+            CloudBlobContainer container = blobClient.GetContainerReference("dataprotection");
+
+            container.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+
+            services.AddDataProtection()
+                .SetApplicationName("KinaUnaWebApp")
+                .PersistKeysToAzureBlobStorage(container, "kukeys.xml");
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddHttpClient();
@@ -94,16 +101,14 @@ namespace KinaUnaWeb
             {
                 builder.AllowAnyOrigin()
                     .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials();
+                    .AllowAnyHeader();
             }));
 
             services.AddCors(o => o.AddPolicy("KinaUnaCors", builder =>
             { // Todo: Update cors policy
                 builder.AllowAnyOrigin()
                     .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials();
+                    .AllowAnyHeader();
             }));
 
             services.AddLocalization(o =>
@@ -111,39 +116,38 @@ namespace KinaUnaWeb
                 o.ResourcesPath = "Resources";
             });
 
-            services.AddMvc(options =>
+            services.AddControllersWithViews(options =>
             {
                 var policy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
-                options.AllowCombiningAuthorizeFilters = false;
-            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix);
-            
+            }).AddNewtonsoftJson();
+
             var authorityServerUrl = Configuration.GetValue<string>("AuthenticationServer");
             var authenticationServerClientId = Configuration.GetValue<string>("AuthenticationServerClientId");
             var authenticationServerClientSecret = Configuration.GetValue<string>("AuthenticationServerClientSecret");
 
-            
+
             services.AddAuthentication(options =>
-                {
-                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.SlidingExpiration = true;
+                //options.ExpireTimeSpan = TimeSpan.FromDays(180);
+                options.Events.OnSigningIn = (context) =>
                 {
-                    options.SlidingExpiration = true;
-                    //options.ExpireTimeSpan = TimeSpan.FromDays(180);
-                    options.Events.OnSigningIn = (context) =>
-                    {
-                        context.CookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
-                        return Task.CompletedTask;
-                    };
+                    context.CookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
+                    return Task.CompletedTask;
+                };
 
-                    if (!_env.IsDevelopment())
-                    {
-                        options.Cookie.Domain = "." + Constants.AppRootDomain;
-                    }
-                })
+                if (!_env.IsDevelopment())
+                {
+                    options.Cookie.Domain = "." + Constants.AppRootDomain;
+                }
+            })
                 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
                 {
                     options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -189,27 +193,16 @@ namespace KinaUnaWeb
                         NameClaimType = JwtClaimTypes.Email,
                         RoleClaimType = JwtClaimTypes.Role
                     };
-                    
+
                 });
             services.AddAuthorization();
-            services.AddSignalR().AddMessagePackProtocol();
+            services.AddSignalR().AddMessagePackProtocol().AddNewtonsoftJsonProtocol();
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+            services.AddApplicationInsightsTelemetry();
         }
 
         public void Configure(IApplicationBuilder app)
         {
-            if (_env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-                app.UseCors("localCors");
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
-                app.UseCors("KinaUnaCors");
-            }
-
             app.UseHttpsRedirection();
             app.UseCookiePolicy();
             var supportedCultures = new[]
@@ -231,20 +224,31 @@ namespace KinaUnaWeb
                 CookieName = Constants.LanguageCookieName
             };
             localizationOptions.RequestCultureProviders.Insert(0, provider);
-            
+
             app.UseRequestLocalization(localizationOptions);
 
             app.UseFileServer();
-            
-            app.UseAuthentication();
 
-            
-            app.UseSignalR(routes => routes.MapHub<WebNotificationHub>("/webnotificationhub"));
-            app.UseMvc(routes =>
+            app.UseRouting();
+
+            if (_env.IsDevelopment())
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                app.UseDeveloperExceptionPage();
+                app.UseCors("localCors");
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
+                app.UseCors("KinaUnaCors");
+            }
+
+            app.UseAuthentication();
+            
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHub<WebNotificationHub>("/webnotificationhub");
+                endpoints.MapDefaultControllerRoute();
             });
         }
     }
