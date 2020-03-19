@@ -2,7 +2,7 @@
 
 The source code for KinaUna.com
 
-KinaUna is an ASP.Net Core 2.2 web application, hosted on Azure.
+KinaUna is an ASP.Net Core 3.1 web application, hosted on Azure.
 
 The goal is to create apps, services and tools for families.
 
@@ -30,7 +30,7 @@ More information can be found here: https://web.kinauna.com/Home/About
 
 ## Technologies used
 - C#
-- ASP.Net Core 2.2
+- ASP.Net Core 3.1
 - JavaScript, JQuery
 - Entity Framework Core
 - SQL Server
