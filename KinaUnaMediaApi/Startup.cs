@@ -1,8 +1,6 @@
 ﻿using IdentityServer4.AccessTokenValidation;
 using KinaUna.Data.Contexts;
-using KinaUnaMediaApi.Authorization;
 using KinaUnaMediaApi.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -41,21 +39,6 @@ namespace KinaUnaMediaApi
             services.AddScoped<IDataService, DataService>();
 
             services.AddControllers().AddNewtonsoftJson();
-
-            services.AddAuthorization(authorizationOptions =>
-            {
-                authorizationOptions.AddPolicy(
-                    "MustBeAdmin",
-                    policyBuilder =>
-                    {
-                        policyBuilder.RequireAuthenticatedUser();
-                        policyBuilder.AddRequirements(
-                            new MustBeAdminRequirement());
-                    });
-
-            });
-
-            services.AddScoped<IAuthorizationHandler, MustBeAdminHandler>();
             services.AddSingleton<ImageStore>();
             services.AddScoped<AzureNotifications>();
             services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
@@ -66,6 +49,8 @@ namespace KinaUnaMediaApi
                     options.ApiSecret = authenticationServerClientSecret;
                     options.RequireHttpsMetadata = true;
                 });
+            services.AddAuthorization();
+            services.AddApplicationInsightsTelemetry();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -80,13 +65,10 @@ namespace KinaUnaMediaApi
                 app.UseHsts();
             }
 
-            app.UseStaticFiles();
-
             app.UseHttpsRedirection();
-
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
-            //app.UseMvc();
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }

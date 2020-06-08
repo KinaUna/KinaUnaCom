@@ -25,6 +25,7 @@ using KinaUnaWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 using KinaUna.Data;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.Blob;
@@ -85,9 +86,13 @@ namespace KinaUnaWeb
                 .SetApplicationName("KinaUnaWebApp")
                 .PersistKeysToAzureBlobStorage(container, "kukeys.xml");
 
+            var authorityServerUrl = Configuration.GetValue<string>("AuthenticationServer");
+            var authenticationServerClientId = Configuration.GetValue<string>("AuthenticationServerClientId");
+            var authenticationServerClientSecret = Configuration.GetValue<string>("AuthenticationServerClientSecret");
+
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddHttpClient();
-            services.AddTransient<IProgenyManager, ProgenyManager>();
+            services.AddHttpClient<IProgenyManager, ProgenyManager>();
             services.AddHttpClient<IProgenyHttpClient, ProgenyHttpClient>();
             services.AddHttpClient<IMediaHttpClient, MediaHttpClient>();
             services.AddTransient<IIdentityParser<ApplicationUser>, IdentityParser>();
@@ -96,6 +101,10 @@ namespace KinaUnaWeb
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddTransient<IEmailSender, EmailSender>();
             services.AddTransient<IPushMessageSender, PushMessageSender>();
+            services.AddSingleton<ApiTokenInMemoryClient>();
+
+            services.Configure<AuthConfigurations>(config => { config.StsServer = authorityServerUrl; config.ProtectedApiUrl = Configuration.GetValue<string>("ProgenyApiServer") + " " + Configuration.GetValue<string>("MediaApiServer"); });
+
 
             services.AddCors(o => o.AddPolicy("localCors", builder =>
             {
@@ -122,11 +131,11 @@ namespace KinaUnaWeb
                     .RequireAuthenticatedUser()
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
-            }).AddNewtonsoftJson();
+            }).AddNewtonsoftJson()
+            .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
+            .AddRazorRuntimeCompilation();
 
-            var authorityServerUrl = Configuration.GetValue<string>("AuthenticationServer");
-            var authenticationServerClientId = Configuration.GetValue<string>("AuthenticationServerClientId");
-            var authenticationServerClientSecret = Configuration.GetValue<string>("AuthenticationServerClientSecret");
+
 
 
             services.AddAuthentication(options =>
@@ -135,17 +144,19 @@ namespace KinaUnaWeb
                 options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
             }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
+                options.Cookie.Name = "KinaUnaCookie";
                 options.SlidingExpiration = true;
-                //options.ExpireTimeSpan = TimeSpan.FromDays(180);
                 options.Events.OnSigningIn = (context) =>
                 {
                     context.CookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(30);
                     return Task.CompletedTask;
+
                 };
 
                 if (!_env.IsDevelopment())
                 {
-                    options.Cookie.Domain = "." + Constants.AppRootDomain;
+                    options.Cookie.Domain = "web." + Constants.AppRootDomain;
+
                 }
             })
                 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
@@ -244,7 +255,8 @@ namespace KinaUnaWeb
             }
 
             app.UseAuthentication();
-            
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<WebNotificationHub>("/webnotificationhub");

@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -182,7 +181,7 @@ namespace KinaUna.IDP
 
                     // This enables automatic token cleanup. this is optional.
                     options.EnableTokenCleanup = true;
-                    options.TokenCleanupInterval = 21600;
+                    options.TokenCleanupInterval = 3600;
                 })
                 .AddRedisCaching(options =>
                 {
@@ -195,6 +194,21 @@ namespace KinaUna.IDP
                 .AddProfileServiceCache<ProfileService>()
                 .Services.AddTransient<IProfileService, ProfileService>();
 
+            services.AddAuthentication().AddGoogle("Google", "Google", options =>
+            {
+                options.ClientId = Configuration["GoogleClientId"];
+                options.ClientSecret = Configuration["GoogleClientSecret"];
+            }).AddFacebook("Facebook", "Facebook", options =>
+            {
+                options.ClientId = Configuration["FacebookClientId"];
+                options.ClientSecret = Configuration["FacebookClientSecret"];
+            }).AddMicrosoftAccount("Microsoft", "Microsoft", microsoftOptions =>
+            {
+                microsoftOptions.ClientId = Configuration["MicrosoftClientId"];
+                microsoftOptions.ClientSecret = Configuration["MicrosoftClientSecret"];
+            });
+
+            services.AddApplicationInsightsTelemetry();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment hostingEnvironment
@@ -232,6 +246,8 @@ namespace KinaUna.IDP
             app.UseRouting();
             app.UseCors("KinaUnaCors");
             app.UseIdentityServer();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints => {
                 endpoints.MapDefaultControllerRoute();
             });
