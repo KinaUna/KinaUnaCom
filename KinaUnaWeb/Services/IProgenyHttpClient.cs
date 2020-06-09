@@ -11,8 +11,6 @@ namespace KinaUnaWeb.Services
     /// </summary>
     public interface IProgenyHttpClient
     {
-        Task<HttpClient> GetClient();
-
         /// <summary>
         /// Gets a user's information from the email address.
         /// </summary>

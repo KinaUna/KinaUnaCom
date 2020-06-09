@@ -88,12 +88,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="System">
-      <HintPath>System</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Update="Views\AccessManagement\AddAccess.de.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
